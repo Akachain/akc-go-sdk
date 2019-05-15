@@ -27,8 +27,9 @@ func (e *akcError) Error() string {
  * this variable is being added to the ledger, then its initial value is assumed to be 0. The arguments
  * to give in the args array are as follows:
  *	- args[0] -> name of the variable
- *	- args[1] -> new delta (float)
- *	- args[2] -> operation (currently supported are addition "+" and subtraction "-")
+ *	- args[1] -> key of the variable
+ *	- args[2] -> new delta (float)
+ *	- args[3] -> operation (currently supported are addition "+" and subtraction "-")
  *
  * @param APIstub The chaincode shim
  * @param args The arguments array for the update invocation
@@ -81,6 +82,7 @@ func (akcStub *AkcHighThroughput) Insert(APIstub shim.ChaincodeStubInterface, ar
  * and computes the final value from all deltas. The args array for the invocation must contain the
  * following argument:
  *	- args[0] -> The name of the variable to get the value of
+ *	- args[1] -> The key of the variable to get the value of
  *
  * @param APIstub The chaincode shim
  * @param args The arguments array for the get invocation
@@ -154,6 +156,7 @@ func (akcStub *AkcHighThroughput) Get(APIstub shim.ChaincodeStubInterface, args 
  * will result in an undefined final value for the variable and loss of data. Use pruneSafe if data
  * integrity is important. The args array contains the following argument:
  *	- args[0] -> The name of the variable to prune
+ *	- args[1] -> The key of the variable to prune
  *
  * @param APIstub The chaincode shim
  * @param args The args array for the pruneFast invocation
@@ -240,6 +243,7 @@ func (akcStub *AkcHighThroughput) PruneFast(APIstub shim.ChaincodeStubInterface,
  * to a new row. This back-up row is deleted only after the new aggregate delta has been successfully
  * written to the ledger. The args array contains the following argument:
  *	args[0] -> The name of the variable to prune
+ *	args[1] -> The key of the variable to prune
  *
  * @param APIstub The chaincode shim
  * @param args The arguments array for the pruneSafe invocation
@@ -316,6 +320,7 @@ func (akcStub *AkcHighThroughput) PruneSafe(APIstub shim.ChaincodeStubInterface,
  * Deletes all rows associated with an aggregate variable from the ledger. The args array
  * contains the following argument:
  *	- args[0] -> The name of the variable to delete
+ *	- args[1] -> The key of the variable to prune
  *
  * @param APIstub The chaincode shim
  * @param args The arguments array for the delete invocation
