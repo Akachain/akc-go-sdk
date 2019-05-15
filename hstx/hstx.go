@@ -5,8 +5,8 @@ import (
 
 	"github.com/hyperledger/fabric/core/chaincode/shim"
 	pb "github.com/hyperledger/fabric/protos/peer"
-	. "gitlab.com/akachain/highsecuretransaction/common"
-	ctl "gitlab.com/akachain/highsecuretransaction/controllers"
+	. "gitlab.com/akachain/akc-go-sdk/common"
+	ctl "gitlab.com/akachain/akc-go-sdk/hstx/controllers"
 )
 
 // Chaincode implementation

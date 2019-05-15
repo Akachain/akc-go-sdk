@@ -6,7 +6,6 @@ import (
 
 	"github.com/hyperledger/fabric/core/chaincode/shim"
 	pb "github.com/hyperledger/fabric/protos/peer"
-	"github.com/mitchellh/mapstructure"
 	"github.com/rs/xid"
 	"gitlab.com/akachain/akc-go-sdk/common"
 	"gitlab.com/akachain/akc-go-sdk/hstx/models"
@@ -100,62 +99,6 @@ func (commit *Commit) CreateCommit(stub shim.ChaincodeStubInterface, args []stri
 		return common.RespondError(resErr)
 	}
 	resSuc := common.ResponseSuccess{common.SUCCESS, common.ResCodeDict[common.SUCCESS], CommitID}
-	return common.RespondSuccess(resSuc)
-}
-
-//GetCommitByID
-func (commit *Commit) GetCommitByID(stub shim.ChaincodeStubInterface, args []string) pb.Response {
-
-	if len(args) != 1 {
-		//Invalid arguments
-		resErr := common.ResponseError{common.ERR2, common.ResCodeDict[common.ERR2]}
-		return common.RespondError(resErr)
-	}
-	CommitID := args[0]
-
-	rs, err := get_data_byid_(stub, CommitID, models.COMMITTABLE)
-
-	mapstructure.Decode(rs, commit)
-	fmt.Printf("Commit: %v\n", commit)
-
-	bytes, err := json.Marshal(commit)
-	if err != nil {
-		//Convert Json Fail
-		resErr := common.ResponseError{common.ERR3, fmt.Sprintf("%s %s %s", common.ResCodeDict[common.ERR3], err.Error(), common.GetLine())}
-		return common.RespondError(resErr)
-	}
-	fmt.Printf("Response: %s\n", string(bytes))
-
-	resSuc := common.ResponseSuccess{common.SUCCESS, common.ResCodeDict[common.SUCCESS], string(bytes)}
-	return common.RespondSuccess(resSuc)
-}
-
-//GetAllCommit
-func (commit *Commit) GetAllCommit(stub shim.ChaincodeStubInterface) pb.Response {
-	commitbytes, err := get_all_data_(stub, models.COMMITTABLE)
-
-	commit = new(Commit)
-	Commitlist := []*Commit{}
-
-	for row_json_bytes := range commitbytes {
-		commit = new(Commit)
-		err = json.Unmarshal(row_json_bytes, commit)
-		if err != nil {
-
-			resErr := common.ResponseError{common.ERR6, common.ResCodeDict[common.ERR6]}
-			return common.RespondError(resErr)
-		}
-		Commitlist = append(Commitlist, commit)
-	}
-
-	commitJson, err2 := json.Marshal(Commitlist)
-	if err2 != nil {
-		//convert JSON eror
-		resErr := common.ResponseError{common.ERR6, common.ResCodeDict[common.ERR6]}
-		return common.RespondError(resErr)
-	}
-
-	resSuc := common.ResponseSuccess{common.SUCCESS, common.ResCodeDict[common.SUCCESS], string(commitJson)}
 	return common.RespondSuccess(resSuc)
 }
 
