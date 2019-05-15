@@ -5,8 +5,8 @@ import (
 
 	"github.com/hyperledger/fabric/core/chaincode/shim"
 	pb "github.com/hyperledger/fabric/protos/peer"
-	. "gitlab.com/akachain/highsecuretransaction/common"
-	ctl "gitlab.com/akachain/highsecuretransaction/controllers"
+	. "gitlab.com/akachain/akc-go-sdk/common"
+	ctl "gitlab.com/akachain/akc-go-sdk/hstx/controllers"
 )
 
 // Chaincode implementation
@@ -57,30 +57,12 @@ func (t *Chaincode) Query(stub shim.ChaincodeStubInterface) pb.Response {
 	function, args := stub.GetFunctionAndParameters()
 
 	switch function {
-	// GetQuorumByID
-	case "GetQuorumByID":
-		return controller_quorum.GetQuorumByID(stub, args)
-		// GetAllQuorum
-	case "GetAllQuorum":
-		return controller_quorum.GetAllQuorum(stub)
-		// GetCommitByID
-	case "GetCommitByID":
-		return controller_commit.GetCommitByID(stub, args)
-		// GetAllCommit
-	case "GetAllCommit":
-		return controller_commit.GetAllCommit(stub)
-		// GetProposalByID
-	case "GetProposalByID":
-		return controller_proposal.GetProposalByID(stub, args)
-		// GetAllProposal
-	case "GetAllProposal":
-		return controller_proposal.GetAllProposal(stub)
-		// GetAdminByID
-	case "GetAdminByID":
-		return controller_admin.GetAdminByID(stub, args)
-		// GetAllAdmin
-	case "GetAllAdmin":
-		return controller_admin.GetAllAdmin(stub)
+	// GetDataID
+	case "GetDataByID":
+		return ctl.GetDataByID(stub, args)
+		// GetAllData
+	case "GetAllData":
+		return ctl.GetAllData(stub, args)
 	}
 
 	return shim.Error(fmt.Sprintf("[Mainchain Chaincode] Invoke and Query not find function " + function))
