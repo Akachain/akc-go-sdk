@@ -33,7 +33,7 @@ func TestAkcHighThroughtput(t *testing.T) {
 	// Check output after add 100 to HTC
 	s, err1 := strconv.ParseFloat(res2, 64)
 	final, err2 := strconv.ParseFloat("100", 64)
-	if err1 != nil && err2 != nil && s != final {
+	if err1 == nil && err2 == nil && s != final {
 		t.Errorf("Inaccurate data, add: %f, response: %f", final, s)
 	}
 

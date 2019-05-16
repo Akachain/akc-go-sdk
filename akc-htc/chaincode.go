@@ -40,6 +40,7 @@ func (t *SampleChaincode) Invoke(stub shim.ChaincodeStubInterface) peer.Response
 	return shim.Success([]byte(result))
 }
 
+// Demo use akachain high throught put in chaincode
 func insert(stub shim.ChaincodeStubInterface, args []string) (string, error) {
 	akc := AkcHighThroughput{}
 	check := akc.Insert(stub, args)
