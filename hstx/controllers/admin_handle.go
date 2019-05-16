@@ -3,11 +3,14 @@ package controllers
 import (
 	"fmt"
 
+	"github.com/rs/xid"
+
 	"github.com/Akachain/akc-go-sdk/common"
 	"github.com/Akachain/akc-go-sdk/hstx/models"
 	. "github.com/Akachain/akc-go-sdk/util"
 	"github.com/hyperledger/fabric/core/chaincode/shim"
 	pb "github.com/hyperledger/fabric/protos/peer"
+	"github.com/mitchellh/mapstructure"
 )
 
 type Admin models.Admin
@@ -21,7 +24,7 @@ func (admin *Admin) CreateAdmin(stub shim.ChaincodeStubInterface, args []string)
 		resErr := common.ResponseError{common.ERR2, common.ResCodeDict[common.ERR2]}
 		return common.RespondError(resErr)
 	}
-	AdminID := "a"
+	AdminID := xid.New().String()
 	Name := args[0]
 	Publickey := args[1]
 
@@ -37,7 +40,13 @@ func (admin *Admin) CreateAdmin(stub shim.ChaincodeStubInterface, args []string)
 
 //UpdateAdmin
 func (admin *Admin) UpdateAdmin(stub shim.ChaincodeStubInterface, args []string) pb.Response {
+	if len(args) != 3 {
+		//Invalid arguments
+		resErr := common.ResponseError{common.ERR2, common.ResCodeDict[common.ERR2]}
+		return common.RespondError(resErr)
+	}
 	// get admin information
+	var admin_tmp Admin
 	AdminID := args[0]
 	admin_rs, err := Get_data_byid_(stub, AdminID, models.ADMINTABLE)
 	if err != nil {
@@ -46,7 +55,7 @@ func (admin *Admin) UpdateAdmin(stub shim.ChaincodeStubInterface, args []string)
 	}
 
 	//Find Field Need update
-	admin_tmp := admin_rs.(Admin)
+	mapstructure.Decode(admin_rs, &admin_tmp)
 	if args[1] == "Name" {
 		admin_tmp.Name = args[2]
 	} else if args[1] == "PublicKey" {

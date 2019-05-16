@@ -36,7 +36,7 @@ func (quorum *Quorum) CreateQuorum(stub shim.ChaincodeStubInterface, args []stri
 
 	//check Only signed once
 	quorumResult := new(Quorum)
-	queryString := fmt.Sprintf("{\"selector\": {\"ProposalID\": \"%s\"},\"_id\": {\"$regex\": \"Quorum_\"}}", ProposalID)
+	queryString := fmt.Sprintf("{\"selector\": {\"_id\": {\"$regex\": \"^Quorum_\"},\"ProposalID\": \"%s\"}}", ProposalID)
 	fmt.Printf("queryString : %s \n", queryString)
 
 	resultsIterator, err := stub.GetQueryResult(queryString)

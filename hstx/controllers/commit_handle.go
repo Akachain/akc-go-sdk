@@ -44,9 +44,11 @@ func (commit *Commit) CreateCommit(stub shim.ChaincodeStubInterface, args []stri
 	var quorumList = []Quorum{}
 	quorumResutl := new(Quorum)
 	commitResutl := new(Commit)
-	queryString := fmt.Sprintf("{\"selector\": {\"ProposalID\": \"%s\"}}", ProposalID)
+	//queryStringQuorum := fmt.Sprintf("{\"selector\": {\"_id\": {\"$regex\": \"^Quorum_\"},\"ProposalID\": \"%s\"}}", ProposalID)
 
-	resultsIterator, err := stub.GetQueryResult(queryString)
+	queryStringCommit := fmt.Sprintf("{\"selector\": {\"_id\": {\"$regex\": \"^Commit_\"},\"ProposalID\": \"%s\"}}", ProposalID)
+
+	resultsIterator, err := stub.GetQueryResult(queryStringCommit)
 	if err != nil {
 		resErr := common.ResponseError{common.ERR4, fmt.Sprintf("%s %s %s", common.ResCodeDict[common.ERR4], err.Error(), common.GetLine())}
 		return common.RespondError(resErr)

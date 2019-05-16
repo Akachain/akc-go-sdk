@@ -34,16 +34,19 @@ func (t *Chaincode) Invoke(stub shim.ChaincodeStubInterface) pb.Response {
 	// Retrieve the requested Smart Contract function and arguments
 	function, args := stub.GetFunctionAndParameters()
 	switch function {
-	//Create CreateAdmin
+	//CreateAdmin
 	case "CreateAdmin":
 		return controller_admin.CreateAdmin(stub, args)
-	//Create CreateProposal
+	//UpdateAdmin -> For testing
+	case "UpdateAdmin":
+		return controller_admin.UpdateAdmin(stub, args)
+	//CreateProposal
 	case "CreateProposal":
 		return controller_proposal.CreateProposal(stub, args)
-		//Create CreateQuorum
+	//CreateQuorum
 	case "CreateQuorum":
 		return controller_quorum.CreateQuorum(stub, args)
-		//Create CreateCommit
+	//CreateCommit
 	case "CreateCommit":
 		return controller_commit.CreateCommit(stub, args)
 	default:

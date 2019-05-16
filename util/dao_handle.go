@@ -63,7 +63,7 @@ func GetDataByID(stub shim.ChaincodeStubInterface, DataID string, data interface
 	rs, err := Get_data_byid_(stub, DataID, ModelTable)
 
 	mapstructure.Decode(rs, data)
-	fmt.Printf("Proposal: %v\n", data)
+	fmt.Printf("data: %v\n", data)
 
 	bytes, err := json.Marshal(data)
 	if err != nil {

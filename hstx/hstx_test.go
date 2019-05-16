@@ -27,14 +27,16 @@ func checkCallFuncQuerry(t *testing.T, stub *shim.MockStub, args [][]byte) strin
 func TestMainchain(t *testing.T) {
 	cc := new(Chaincode)
 	stub := shim.NewMockStub("mainchain", cc)
+	AdminID := "ntienbo"
 
 	//	rs5 := checkCallFuncInvoke(t, stub, [][]byte{[]byte("CreateAdmin"), []byte("Admin"), []byte("pulic key")})
 	rs7 := checkCallFuncInvoke(t, stub, [][]byte{[]byte("CreateAdmin"), []byte("Admin1"), []byte("pulic key")})
-	rs7 = checkCallFuncInvoke(t, stub, [][]byte{[]byte("CreateAdmin"), []byte("Admin21"), []byte("pulic key")})
 
-	//rs3 := checkByID(t, stub, [][]byte{[]byte("GetAdminByID1"), []byte("aa"), []byte(models.ADMINTABLE)})
+	rs7 = checkCallFuncInvoke(t, stub, [][]byte{[]byte("UpdateAdmin"), []byte("a"), []byte("Name"), []byte("Newnew")})
 
-	//rs4 := checkGetALL(t, stub, "GetAllProposal")
+	ProposalID := "a"
+	sig := "MEYCIQC7vKLzjw43HJ/9SqxUzZtfdBIdFks7qiIXiHitu8uqqQIhAKXNwpBDuWquPE/00l8isa6rh85ZYYf+dgb1khSqNr7O"
+	rs7 = checkCallFuncInvoke(t, stub, [][]byte{[]byte("CreateQuorum"), []byte(sig), []byte(AdminID), []byte(ProposalID)})
 
 	//	rs6 = checkCallFuncQuerry(t, stub, [][]byte{[]byte("GetAllAdmin"), []byte("")})
 	rs6 := checkCallFuncQuerry(t, stub, [][]byte{[]byte("GetAdminByID"), []byte("a")})
