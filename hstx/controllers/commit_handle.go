@@ -6,10 +6,13 @@ import (
 
 	"github.com/Akachain/akc-go-sdk/common"
 	"github.com/Akachain/akc-go-sdk/hstx/models"
+	. "github.com/Akachain/akc-go-sdk/util"
 	"github.com/hyperledger/fabric/core/chaincode/shim"
 	pb "github.com/hyperledger/fabric/protos/peer"
 	"github.com/rs/xid"
 )
+
+type Commit models.Commit
 
 //High secure transaction Commit handle
 // ------------------- //
@@ -22,7 +25,7 @@ func (commit *Commit) CreateCommit(stub shim.ChaincodeStubInterface, args []stri
 	}
 	ProposalID := args[0]
 	var admin *Admin
-	adminbytes, err := get_all_data_(stub, models.ADMINTABLE)
+	adminbytes, err := Get_all_data_(stub, models.ADMINTABLE)
 
 	admin = new(Admin)
 	Adminlist := []*Admin{}
@@ -41,9 +44,11 @@ func (commit *Commit) CreateCommit(stub shim.ChaincodeStubInterface, args []stri
 	var quorumList = []Quorum{}
 	quorumResutl := new(Quorum)
 	commitResutl := new(Commit)
-	queryString := fmt.Sprintf("{\"selector\": {\"ProposalID\": \"%s\"}}", ProposalID)
+	//queryStringQuorum := fmt.Sprintf("{\"selector\": {\"_id\": {\"$regex\": \"^Quorum_\"},\"ProposalID\": \"%s\"}}", ProposalID)
 
-	resultsIterator, err := stub.GetQueryResult(queryString)
+	queryStringCommit := fmt.Sprintf("{\"selector\": {\"_id\": {\"$regex\": \"^Commit_\"},\"ProposalID\": \"%s\"}}", ProposalID)
+
+	resultsIterator, err := stub.GetQueryResult(queryStringCommit)
 	if err != nil {
 		resErr := common.ResponseError{common.ERR4, fmt.Sprintf("%s %s %s", common.ResCodeDict[common.ERR4], err.Error(), common.GetLine())}
 		return common.RespondError(resErr)
@@ -93,13 +98,31 @@ func (commit *Commit) CreateCommit(stub shim.ChaincodeStubInterface, args []stri
 	CommitID := xid.New().String()
 	fmt.Printf("CommitID %v\n", CommitID)
 
-	err1 := create_data_(stub, models.COMMITTABLE, []string{CommitID}, &Commit{CommitID: string(CommitID), ProposalID: ProposalID, QuorumID: quorumIDList, Status: "Verify"})
+	err1 := Create_data_(stub, models.COMMITTABLE, []string{CommitID}, &Commit{CommitID: string(CommitID), ProposalID: ProposalID, QuorumID: quorumIDList, Status: "Verify"})
 	if err1 != nil {
 		resErr := common.ResponseError{common.ERR6, fmt.Sprintf("%s %s %s", common.ResCodeDict[common.ERR6], err1.Error(), common.GetLine())}
 		return common.RespondError(resErr)
 	}
 	resSuc := common.ResponseSuccess{common.SUCCESS, common.ResCodeDict[common.SUCCESS], CommitID}
 	return common.RespondSuccess(resSuc)
+}
+
+// GetCommitByID
+func (commit *Commit) GetCommitByID(stub shim.ChaincodeStubInterface, args []string) pb.Response {
+	if len(args) != 1 {
+		//Invalid arguments
+		resErr := common.ResponseError{common.ERR2, common.ResCodeDict[common.ERR2]}
+		return common.RespondError(resErr)
+	}
+	DataID := args[0]
+	res := GetDataByID(stub, DataID, commit, models.COMMITTABLE)
+	return res
+}
+
+// GetAllCommit
+func (commit *Commit) GetAllCommit(stub shim.ChaincodeStubInterface) pb.Response {
+	res := GetAllData(stub, commit, models.COMMITTABLE)
+	return res
 }
 
 // ------------------- //

@@ -11,11 +11,14 @@ import (
 
 	"github.com/Akachain/akc-go-sdk/common"
 	"github.com/Akachain/akc-go-sdk/hstx/models"
+	. "github.com/Akachain/akc-go-sdk/util"
 	"github.com/hyperledger/fabric/core/chaincode/shim"
 	pb "github.com/hyperledger/fabric/protos/peer"
 	"github.com/mitchellh/mapstructure"
 	"github.com/rs/xid"
 )
+
+type Quorum models.Quorum
 
 //High secure transaction Quorum handle
 // ------------------- //
@@ -33,7 +36,7 @@ func (quorum *Quorum) CreateQuorum(stub shim.ChaincodeStubInterface, args []stri
 
 	//check Only signed once
 	quorumResult := new(Quorum)
-	queryString := fmt.Sprintf("{\"selector\": {\"ProposalID\": \"%s\"}}", ProposalID)
+	queryString := fmt.Sprintf("{\"selector\": {\"_id\": {\"$regex\": \"^Quorum_\"},\"ProposalID\": \"%s\"}}", ProposalID)
 	fmt.Printf("queryString : %s \n", queryString)
 
 	resultsIterator, err := stub.GetQueryResult(queryString)
@@ -63,7 +66,7 @@ func (quorum *Quorum) CreateQuorum(stub shim.ChaincodeStubInterface, args []stri
 	fmt.Printf("Pass if quorum.AdminID == AdminID \n")
 
 	//get data to verify
-	rs, errData := get_data_byid_(stub, ProposalID, models.PROPOSALTABLE)
+	rs, errData := Get_data_byid_(stub, ProposalID, models.PROPOSALTABLE)
 	dataProposal := rs.(*Proposal)
 	fmt.Printf("Pass get data to verify \n")
 
@@ -76,7 +79,7 @@ func (quorum *Quorum) CreateQuorum(stub shim.ChaincodeStubInterface, args []stri
 	fmt.Printf("ProposalID %v\n", ProposalID)
 	fmt.Printf("dataProposal %v\n", dataProposal)
 
-	rs, errAd := get_data_byid_(stub, AdminID, models.ADMINTABLE)
+	rs, errAd := Get_data_byid_(stub, AdminID, models.ADMINTABLE)
 
 	mapstructure.Decode(rs, admin)
 	fmt.Printf("Amdin: %v\n", admin)
@@ -112,13 +115,31 @@ func (quorum *Quorum) CreateQuorum(stub shim.ChaincodeStubInterface, args []stri
 	QuorumID := xid.New().String()
 	fmt.Printf("QuorumID %v\n", QuorumID)
 
-	err1 := create_data_(stub, models.QUORUMTABLE, []string{QuorumID}, &Quorum{AdminID: AdminID, QuorumID: QuorumID, ProposalID: ProposalID, Status: "Verify"})
+	err1 := Create_data_(stub, models.QUORUMTABLE, []string{QuorumID}, &Quorum{AdminID: AdminID, QuorumID: QuorumID, ProposalID: ProposalID, Status: "Verify"})
 	if err1 != nil {
 		resErr := common.ResponseError{common.ERR6, fmt.Sprintf("%s %s %s", common.ResCodeDict[common.ERR6], err1.Error(), common.GetLine())}
 		return common.RespondError(resErr)
 	}
 	resSuc := common.ResponseSuccess{common.SUCCESS, common.ResCodeDict[common.SUCCESS], QuorumID}
 	return common.RespondSuccess(resSuc)
+}
+
+// GetQuorumByID
+func (quorum *Quorum) GetQuorumByID(stub shim.ChaincodeStubInterface, args []string) pb.Response {
+	if len(args) != 1 {
+		//Invalid arguments
+		resErr := common.ResponseError{common.ERR2, common.ResCodeDict[common.ERR2]}
+		return common.RespondError(resErr)
+	}
+	DataID := args[0]
+	res := GetDataByID(stub, DataID, quorum, models.QUORUMTABLE)
+	return res
+}
+
+// GetAllQuorum
+func (quorum *Quorum) GetAllQuorum(stub shim.ChaincodeStubInterface) pb.Response {
+	res := GetAllData(stub, quorum, models.QUORUMTABLE)
+	return res
 }
 
 // ------------------- //
