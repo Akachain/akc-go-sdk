@@ -30,7 +30,7 @@ var controller_commit ctl.Commit
  * The calling application program has also specified the particular smart contract function to be called, with arguments
  */
 func (t *Chaincode) Invoke(stub shim.ChaincodeStubInterface) pb.Response {
-	Logger.Info("########### Hstx Invoke ###########")
+	Logger.Info("########### Mainchain Invoke ###########")
 	// Retrieve the requested Smart Contract function and arguments
 	function, args := stub.GetFunctionAndParameters()
 	switch function {
@@ -53,19 +53,37 @@ func (t *Chaincode) Invoke(stub shim.ChaincodeStubInterface) pb.Response {
 
 // Query callback representing the query of a chaincode
 func (t *Chaincode) Query(stub shim.ChaincodeStubInterface) pb.Response {
-	Logger.Info("########### Hstx Query ###########")
+	Logger.Info("########### Mainchain Query ###########")
 	function, args := stub.GetFunctionAndParameters()
 
 	switch function {
-	// GetDataID
-	case "GetDataByID":
-		return ctl.GetDataByID(stub, args)
-		// GetAllData
-	case "GetAllData":
-		return ctl.GetAllData(stub, args)
+	// GetAdminByID
+	case "GetAdminByID":
+		return controller_admin.GetAdminByID(stub, args)
+	// GetAllAdmin
+	case "GetAllAdmin":
+		return controller_admin.GetAllAdmin(stub)
+	// GetProposalByID
+	case "GetProposalByID":
+		return controller_proposal.GetProposalByID(stub, args)
+	// GetAllProposal
+	case "GetAllProposal":
+		return controller_proposal.GetAllProposal(stub)
+	// GetQuorumByID
+	case "GetQuorumByID":
+		return controller_quorum.GetQuorumByID(stub, args)
+	// GetAllQuorum
+	case "GetAllQuorum":
+		return controller_quorum.GetAllQuorum(stub)
+	// GetCommitByID
+	case "GetCommitByID":
+		return controller_commit.GetCommitByID(stub, args)
+	// GetAllCommit
+	case "GetAllCommit":
+		return controller_commit.GetAllCommit(stub)
 	}
 
-	return shim.Error(fmt.Sprintf("[Hstx Chaincode] Invoke and Query not find function " + function))
+	return shim.Error(fmt.Sprintf("[Mainchain Chaincode] Invoke and Query not find function " + function))
 }
 
 // The main function is only relevant in unit test mode. Only included here for completeness.

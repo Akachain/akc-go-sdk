@@ -5,8 +5,8 @@ const QUORUMTABLE = "Quorum_"
 
 // Proposal - struct
 type Quorum struct {
-	AdminID    string `json:"AdminID"`
 	QuorumID   string `json:"QuorumID"`
+	AdminID    string `json:"AdminID"`
 	ProposalID string `json:"ProposalID"`
 	Status     string `json:"Status"`
 }
