@@ -235,7 +235,7 @@ func (akcStub *AkcHighThroughput) Prune(APIstub shim.ChaincodeStubInterface, arg
 		// Get the var's value and process it
 		getResp, err := akcStub.Get(APIstub, []string{name, key})
 		if err != nil {
-			return false, fmt.Errorf(fmt.Sprintf("Could not retrieve the value of %s before pruning, pruning aborted: %s %s", name, key))
+			return false, fmt.Errorf(fmt.Sprintf("Could not retrieve the value of %s before pruning, pruning aborted: %s", name, key))
 		}
 
 		valueStr := getResp
@@ -269,7 +269,7 @@ func (akcStub *AkcHighThroughput) Prune(APIstub shim.ChaincodeStubInterface, arg
 
 		updateResp := akcStub.Insert(APIstub, []string{name, key, vStr, "+"})
 		if updateResp != nil {
-			return false, fmt.Errorf(fmt.Sprintf("Could not insert the final value of the variable after pruning, variable backup is stored in %s_PRUNE_BACKUP: %s", name))
+			return false, fmt.Errorf(fmt.Sprintf("Could not insert the final value of the variable after pruning, variable backup is stored in %s_PRUNE_BACKUP: %s", name, key))
 		}
 
 		// Delete the backup value
