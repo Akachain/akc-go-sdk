@@ -3,10 +3,10 @@ package main
 import (
 	"fmt"
 
+	. "github.com/Akachain/akc-go-sdk/common"
+	ctl "github.com/Akachain/akc-go-sdk/hstx/controllers"
 	"github.com/hyperledger/fabric/core/chaincode/shim"
 	pb "github.com/hyperledger/fabric/protos/peer"
-	. "gitlab.com/akachain/akc-go-sdk/common"
-	ctl "gitlab.com/akachain/akc-go-sdk/hstx/controllers"
 )
 
 // Chaincode implementation

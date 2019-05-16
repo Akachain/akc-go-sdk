@@ -4,8 +4,8 @@ import (
 	"fmt"
 	"testing"
 
+	"github.com/Akachain/akc-go-sdk/util"
 	"github.com/hyperledger/fabric/core/chaincode/shim"
-	"gitlab.com/akachain/akc-go-sdk/util"
 )
 
 func checkCallFunc(t *testing.T, stub *util.MockStubExtend, args [][]byte) string {

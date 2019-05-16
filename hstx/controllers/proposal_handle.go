@@ -3,11 +3,11 @@ package controllers
 import (
 	"fmt"
 
+	"github.com/Akachain/akc-go-sdk/common"
+	"github.com/Akachain/akc-go-sdk/hstx/models"
 	"github.com/hyperledger/fabric/core/chaincode/shim"
 	pb "github.com/hyperledger/fabric/protos/peer"
 	"github.com/rs/xid"
-	"gitlab.com/akachain/akc-go-sdk/common"
-	"gitlab.com/akachain/akc-go-sdk/hstx/models"
 )
 
 //High secure transaction Proposal handle

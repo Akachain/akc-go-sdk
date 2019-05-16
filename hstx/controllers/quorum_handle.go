@@ -9,12 +9,12 @@ import (
 	"fmt"
 	"strings"
 
+	"github.com/Akachain/akc-go-sdk/common"
+	"github.com/Akachain/akc-go-sdk/hstx/models"
 	"github.com/hyperledger/fabric/core/chaincode/shim"
 	pb "github.com/hyperledger/fabric/protos/peer"
 	"github.com/mitchellh/mapstructure"
 	"github.com/rs/xid"
-	"gitlab.com/akachain/akc-go-sdk/common"
-	"gitlab.com/akachain/akc-go-sdk/hstx/models"
 )
 
 //High secure transaction Quorum handle
