@@ -2,6 +2,7 @@ package akchtc
 
 import (
 	"fmt"
+	"strconv"
 	"testing"
 
 	"github.com/hyperledger/fabric/core/chaincode/shim"
@@ -29,6 +30,14 @@ func TestAkcHighThroughtput(t *testing.T) {
 
 	res5 := checkInvoke(t, stub, [][]byte{[]byte("delete"), []byte("Merchant"), []byte("1234567890")})
 
+	// Check output after add 100 to HTC
+	s, err1 := strconv.ParseFloat(res2, 64)
+	final, err2 := strconv.ParseFloat("100", 64)
+	if err1 != nil && err2 != nil && s != final {
+		t.Errorf("Inaccurate data, add: %f, response: %f", final, s)
+	}
+
+	// Test response
 	fmt.Printf("Insert response: %v", res1)
 	fmt.Println(".")
 	fmt.Printf("Get response: %v", res2)

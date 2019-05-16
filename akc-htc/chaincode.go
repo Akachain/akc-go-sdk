@@ -21,11 +21,17 @@ func (t *SampleChaincode) Invoke(stub shim.ChaincodeStubInterface) peer.Response
 
 	var result string
 	var err error
+
 	if fn == "insert" {
 		result, err = insert(stub, args)
-	} else { // assume 'get' even if fn is nil
+	} else if fn == "get" {
 		result, err = get(stub, args)
+	} else if fn == "prune" {
+		result, err = prune(stub, args)
+	} else if fn == "delete" {
+		result, err = delete(stub, args)
 	}
+
 	if err != nil {
 		return shim.Error(err.Error())
 	}
