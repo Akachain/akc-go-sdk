@@ -45,7 +45,7 @@ func insert(stub shim.ChaincodeStubInterface, args []string) (string, error) {
 	akc := AkcHighThroughput{}
 	check := akc.Insert(stub, args)
 
-	return fmt.Sprintf("%s", check), nil
+	return fmt.Sprintf("%s", check), check
 }
 
 func get(stub shim.ChaincodeStubInterface, args []string) (string, error) {

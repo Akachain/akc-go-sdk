@@ -167,6 +167,10 @@ func (akcStub *AkcHighThroughput) Prune(APIstub shim.ChaincodeStubInterface, arg
 	key := args[1]
 	pruneType := args[2]
 
+	if pruneType != "PRUNE_FAST" && pruneType != "PRUNE_SAFE" {
+		return false, fmt.Errorf(fmt.Sprintf("Prune type %s is not supported", pruneType))
+	}
+
 	// Get all delta rows for the variable
 	deltaResultsIterator, deltaErr := APIstub.GetStateByPartialCompositeKey("varName~key~op~value~txID", []string{name, key})
 
