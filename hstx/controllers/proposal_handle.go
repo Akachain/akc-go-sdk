@@ -26,7 +26,7 @@ func (proposal *Proposal) CreateProposal(stub shim.ChaincodeStubInterface, args 
 	ProposalID := xid.New().String()
 	fmt.Printf("ProposalID %s\n", ProposalID)
 
-	err := Create_data_(stub, models.PROPOSALTABLE, []string{ProposalID}, &Proposal{ProposalID: ProposalID, Data: args[0]})
+	err := Createdata(stub, models.PROPOSALTABLE, []string{ProposalID}, &Proposal{ProposalID: ProposalID, Data: args[0]})
 
 	if err != nil {
 		resErr := common.ResponseError{common.ERR5, fmt.Sprintf("%s %s %s", common.ResCodeDict[common.ERR5], err.Error(), common.GetLine())}

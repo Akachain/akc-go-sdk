@@ -66,7 +66,7 @@ func (quorum *Quorum) CreateQuorum(stub shim.ChaincodeStubInterface, args []stri
 	fmt.Printf("Pass if quorum.AdminID == AdminID \n")
 
 	//get data to verify
-	rs, errData := Get_data_byid_(stub, ProposalID, models.PROPOSALTABLE)
+	rs, errData := Getdatabyid(stub, ProposalID, models.PROPOSALTABLE)
 	dataProposal := rs.(*Proposal)
 	fmt.Printf("Pass get data to verify \n")
 
@@ -79,7 +79,7 @@ func (quorum *Quorum) CreateQuorum(stub shim.ChaincodeStubInterface, args []stri
 	fmt.Printf("ProposalID %v\n", ProposalID)
 	fmt.Printf("dataProposal %v\n", dataProposal)
 
-	rs, errAd := Get_data_byid_(stub, AdminID, models.ADMINTABLE)
+	rs, errAd := Getdatabyid(stub, AdminID, models.ADMINTABLE)
 
 	mapstructure.Decode(rs, admin)
 	fmt.Printf("Amdin: %v\n", admin)
@@ -115,7 +115,7 @@ func (quorum *Quorum) CreateQuorum(stub shim.ChaincodeStubInterface, args []stri
 	QuorumID := xid.New().String()
 	fmt.Printf("QuorumID %v\n", QuorumID)
 
-	err1 := Create_data_(stub, models.QUORUMTABLE, []string{QuorumID}, &Quorum{AdminID: AdminID, QuorumID: QuorumID, ProposalID: ProposalID, Status: "Verify"})
+	err1 := Createdata(stub, models.QUORUMTABLE, []string{QuorumID}, &Quorum{AdminID: AdminID, QuorumID: QuorumID, ProposalID: ProposalID, Status: "Verify"})
 	if err1 != nil {
 		resErr := common.ResponseError{common.ERR6, fmt.Sprintf("%s %s %s", common.ResCodeDict[common.ERR6], err1.Error(), common.GetLine())}
 		return common.RespondError(resErr)

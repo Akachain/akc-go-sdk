@@ -25,7 +25,7 @@ func (commit *Commit) CreateCommit(stub shim.ChaincodeStubInterface, args []stri
 	}
 	ProposalID := args[0]
 	var admin *Admin
-	adminbytes, err := Get_all_data_(stub, models.ADMINTABLE)
+	adminbytes, err := Getalldata(stub, models.ADMINTABLE)
 
 	admin = new(Admin)
 	Adminlist := []*Admin{}
@@ -44,11 +44,10 @@ func (commit *Commit) CreateCommit(stub shim.ChaincodeStubInterface, args []stri
 	var quorumList = []Quorum{}
 	quorumResutl := new(Quorum)
 	commitResutl := new(Commit)
-	//queryStringQuorum := fmt.Sprintf("{\"selector\": {\"_id\": {\"$regex\": \"^Quorum_\"},\"ProposalID\": \"%s\"}}", ProposalID)
 
-	queryStringCommit := fmt.Sprintf("{\"selector\": {\"_id\": {\"$regex\": \"^Commit_\"},\"ProposalID\": \"%s\"}}", ProposalID)
-
-	resultsIterator, err := stub.GetQueryResult(queryStringCommit)
+	//check ProposalID exist in Quorum
+	queryStringQuorum := fmt.Sprintf("{\"selector\": {\"_id\": {\"$regex\": \"^Quorum_\"},\"ProposalID\": \"%s\"}}", ProposalID)
+	resultsIterator, err := stub.GetQueryResult(queryStringQuorum)
 	if err != nil {
 		resErr := common.ResponseError{common.ERR4, fmt.Sprintf("%s %s %s", common.ResCodeDict[common.ERR4], err.Error(), common.GetLine())}
 		return common.RespondError(resErr)
@@ -61,14 +60,43 @@ func (commit *Commit) CreateCommit(stub shim.ChaincodeStubInterface, args []stri
 			resErr := common.ResponseError{common.ERR4, fmt.Sprintf("%s %s %s", common.ResCodeDict[common.ERR4], err.Error(), common.GetLine())}
 			return common.RespondError(resErr)
 		}
-		_ = json.Unmarshal(queryResponse.Value, commitResutl)
-		_ = json.Unmarshal(queryResponse.Value, quorumResutl)
+		errQuo := json.Unmarshal(queryResponse.Value, quorumResutl)
+		if errQuo != nil {
+			//convert JSON eror
+			resErr := common.ResponseError{common.ERR6, fmt.Sprintf("%s %s %s", common.ResCodeDict[common.ERR6], err.Error(), common.GetLine())}
+			return common.RespondError(resErr)
+		}
 		quorumList = append(quorumList, *quorumResutl)
 	}
 	if quorumResutl.ProposalID == "" {
 		resErr := common.ResponseError{common.ERR12, fmt.Sprintf("%s %s %s", common.ResCodeDict[common.ERR12], "", common.GetLine())}
 		return common.RespondError(resErr)
 	}
+
+	//check Only Commit once
+	queryStringCommit := fmt.Sprintf("{\"selector\": {\"_id\": {\"$regex\": \"^Commit_\"},\"ProposalID\": \"%s\"}}", ProposalID)
+	resultsIterator, err = stub.GetQueryResult(queryStringCommit)
+	if err != nil {
+		resErr := common.ResponseError{common.ERR4, fmt.Sprintf("%s %s %s", common.ResCodeDict[common.ERR4], err.Error(), common.GetLine())}
+		return common.RespondError(resErr)
+	}
+	defer resultsIterator.Close()
+
+	for resultsIterator.HasNext() {
+		queryResponse, err := resultsIterator.Next()
+		if err != nil {
+			resErr := common.ResponseError{common.ERR4, fmt.Sprintf("%s %s %s", common.ResCodeDict[common.ERR4], err.Error(), common.GetLine())}
+			return common.RespondError(resErr)
+		}
+		errCommit := json.Unmarshal(queryResponse.Value, commitResutl)
+		if errCommit != nil {
+			//convert JSON eror
+			resErr := common.ResponseError{common.ERR6, fmt.Sprintf("%s %s %s", common.ResCodeDict[common.ERR6], err.Error(), common.GetLine())}
+			return common.RespondError(resErr)
+		}
+		quorumList = append(quorumList, *quorumResutl)
+	}
+
 	if commitResutl.CommitID != "" && commitResutl.Status == "Verify" {
 		resErr := common.ResponseError{common.ERR11, fmt.Sprintf("%s %s %s", common.ResCodeDict[common.ERR11], "", common.GetLine())}
 		return common.RespondError(resErr)
@@ -98,7 +126,7 @@ func (commit *Commit) CreateCommit(stub shim.ChaincodeStubInterface, args []stri
 	CommitID := xid.New().String()
 	fmt.Printf("CommitID %v\n", CommitID)
 
-	err1 := Create_data_(stub, models.COMMITTABLE, []string{CommitID}, &Commit{CommitID: string(CommitID), ProposalID: ProposalID, QuorumID: quorumIDList, Status: "Verify"})
+	err1 := Createdata(stub, models.COMMITTABLE, []string{CommitID}, &Commit{CommitID: string(CommitID), ProposalID: ProposalID, QuorumID: quorumIDList, Status: "Verify"})
 	if err1 != nil {
 		resErr := common.ResponseError{common.ERR6, fmt.Sprintf("%s %s %s", common.ResCodeDict[common.ERR6], err1.Error(), common.GetLine())}
 		return common.RespondError(resErr)

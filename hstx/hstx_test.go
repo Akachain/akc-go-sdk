@@ -38,8 +38,8 @@ func TestMainchain(t *testing.T) {
 	sig := "MEYCIQC7vKLzjw43HJ/9SqxUzZtfdBIdFks7qiIXiHitu8uqqQIhAKXNwpBDuWquPE/00l8isa6rh85ZYYf+dgb1khSqNr7O"
 	rs7 = checkCallFuncInvoke(t, stub, [][]byte{[]byte("CreateQuorum"), []byte(sig), []byte(AdminID), []byte(ProposalID)})
 
-	//	rs6 = checkCallFuncQuerry(t, stub, [][]byte{[]byte("GetAllAdmin"), []byte("")})
-	rs6 := checkCallFuncQuerry(t, stub, [][]byte{[]byte("GetAdminByID"), []byte("a")})
+	rs6 := checkCallFuncQuerry(t, stub, [][]byte{[]byte("GetAllAdmin"), []byte("")})
+	rs6 = checkCallFuncQuerry(t, stub, [][]byte{[]byte("GetAdminByID"), []byte("a")})
 
 	//fmt.Printf("rs3: %v", rs3)
 	//	fmt.Printf("rs4: %v", rs4)
