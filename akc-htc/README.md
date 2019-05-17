@@ -65,11 +65,18 @@ import (
   "github.com/hyperledger/fabric/core/chaincode/shim"
   akchtc "github.com/Akachain/akc-go-sdk/akc-htc"
 )
-....
-func yourNameFunc(stub shim.ChaincodeStubInterface, args []string) (string, error) {
+
+// YOUR CODE ...
+
+// example code insert using Akachain High throughput
+func insertWithHTC(stub shim.ChaincodeStubInterface, args []string) (string, error) {
   // Init Akachain High Throughput
   akc := akchtc.AkcHighThroughput{}
-  check := akc.Insert(stub, args)
-  return fmt.Sprintf("%s", check), nil
+  res := akc.Insert(stub, []string{"variableName", "112233", "100", "+"})
+
+  if res != nil {
+    return fmt.Sprintf("Failure"), res
+  }
+  return fmt.Sprintf("Success"), nil
 }
 ```
