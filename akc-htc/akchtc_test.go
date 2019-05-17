@@ -29,10 +29,10 @@ func TestAkcHighThroughtput(t *testing.T) {
 	stub := shim.NewMockStub("akchihi", cc)
 
 	// Test Case success
-	checkInvoke(t, stub, [][]byte{[]byte("insert"), []byte("Merchant"), []byte("1234567890"), []byte("100"), []byte("+")})
-	checkInvoke(t, stub, [][]byte{[]byte("insert"), []byte("Merchant"), []byte("0987654321"), []byte("50"), []byte("+")})
-	checkInvoke(t, stub, [][]byte{[]byte("insert"), []byte("Merchant"), []byte("1234567890"), []byte("99"), []byte("-")})
-	checkInvoke(t, stub, [][]byte{[]byte("insert"), []byte("Merchant"), []byte("88662233"), []byte("50"), []byte("+")})
+	checkInvoke(t, stub, [][]byte{[]byte("insert"), []byte("Merchant"), []byte("1234567890"), []byte("100"), []byte("OP_ADD")})
+	checkInvoke(t, stub, [][]byte{[]byte("insert"), []byte("Merchant"), []byte("0987654321"), []byte("50"), []byte("OP_ADD")})
+	checkInvoke(t, stub, [][]byte{[]byte("insert"), []byte("Merchant"), []byte("1234567890"), []byte("99"), []byte("OP_SUB")})
+	checkInvoke(t, stub, [][]byte{[]byte("insert"), []byte("Merchant"), []byte("88662233"), []byte("50"), []byte("OP_ADD")})
 
 	res2 := checkInvoke(t, stub, [][]byte{[]byte("get"), []byte("Merchant"), []byte("1234567890")})
 
@@ -63,7 +63,7 @@ func TestAkcHighThroughtput(t *testing.T) {
 	}
 
 	// // case 3: value not a number
-	insertFail3, insertMsg3 := checkInvokeFail(t, stub, [][]byte{[]byte("insert"), []byte("User"), []byte("2"), []byte("abc"), []byte("+")})
+	insertFail3, insertMsg3 := checkInvokeFail(t, stub, [][]byte{[]byte("insert"), []byte("User"), []byte("2"), []byte("abc"), []byte("OP_ADD")})
 
 	if !insertFail3 {
 		t.Errorf("Insert with value `abc` is fail, but response %v", insertFail3)

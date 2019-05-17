@@ -46,7 +46,7 @@ func (akcStub *AkcHighThroughput) Insert(APIstub shim.ChaincodeStubInterface, ar
 	}
 
 	// Make sure a valid operator is provided
-	if op != "+" && op != "-" {
+	if op != "OP_ADD" && op != "OP_SUB" {
 		return fmt.Errorf(fmt.Sprintf("Operator %s is unrecognized", op))
 	}
 
@@ -128,9 +128,9 @@ func (akcStub *AkcHighThroughput) Get(APIstub shim.ChaincodeStubInterface, args 
 		}
 
 		switch operation {
-		case "+":
+		case "OP_ADD":
 			finalVal += value
-		case "-":
+		case "OP_SUB":
 			finalVal -= value
 		default:
 			return 0, fmt.Errorf(fmt.Sprintf("Unrecognized operation %s", operation))
@@ -219,9 +219,9 @@ func (akcStub *AkcHighThroughput) Prune(APIstub shim.ChaincodeStubInterface, arg
 
 			// Add the value of the deleted row to the final aggregate
 			switch operation {
-			case "+":
+			case "OP_ADD":
 				finalVal += value
-			case "-":
+			case "OP_SUB":
 				finalVal -= value
 			default:
 				return false, fmt.Errorf(fmt.Sprintf("Unrecognized operation %s", operation))
