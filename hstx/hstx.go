@@ -30,7 +30,7 @@ var controller_commit ctl.Commit
  * The calling application program has also specified the particular smart contract function to be called, with arguments
  */
 func (t *Chaincode) Invoke(stub shim.ChaincodeStubInterface) pb.Response {
-	Logger.Info("########### Mainchain Invoke ###########")
+	Logger.Info("########### Hstx Invoke ###########")
 	// Retrieve the requested Smart Contract function and arguments
 	function, args := stub.GetFunctionAndParameters()
 	switch function {
@@ -56,7 +56,7 @@ func (t *Chaincode) Invoke(stub shim.ChaincodeStubInterface) pb.Response {
 
 // Query callback representing the query of a chaincode
 func (t *Chaincode) Query(stub shim.ChaincodeStubInterface) pb.Response {
-	Logger.Info("########### Mainchain Query ###########")
+	Logger.Info("########### Hstx Query ###########")
 	function, args := stub.GetFunctionAndParameters()
 
 	switch function {

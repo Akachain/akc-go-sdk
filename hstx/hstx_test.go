@@ -1,20 +1,28 @@
 package main
 
 import (
+	"encoding/base64"
+	"encoding/json"
 	"fmt"
+	"io/ioutil"
 	"testing"
 
+	. "github.com/Akachain/akc-go-sdk/common"
+	"github.com/Akachain/akc-go-sdk/hstx/models"
+	"github.com/Akachain/akc-go-sdk/util"
 	"github.com/hyperledger/fabric/core/chaincode/shim"
+	"github.com/stretchr/testify/assert"
 )
 
-func checkCallFuncInvoke(t *testing.T, stub *shim.MockStub, args [][]byte) string {
+func checkCallFuncInvoke(t *testing.T, stub *util.MockStubExtend, args [][]byte) string {
 	res := stub.MockInvoke("1", args)
 	if res.Status != shim.OK {
 		return string(res.Payload)
 	}
 	return string(res.Payload)
 }
-func checkCallFuncQuerry(t *testing.T, stub *shim.MockStub, args [][]byte) string {
+
+func checkCallFuncQuerry(t *testing.T, stub *util.MockStubExtend, args [][]byte) string {
 	res := stub.MockInvoke("1", args)
 	if res.Status != shim.OK {
 		t.FailNow()
@@ -24,29 +32,28 @@ func checkCallFuncQuerry(t *testing.T, stub *shim.MockStub, args [][]byte) strin
 	return string(res.Payload)
 }
 
-func TestMainchain(t *testing.T) {
+func TestAdmin(t *testing.T) {
+	// Setup mockextend
 	cc := new(Chaincode)
-	stub := shim.NewMockStub("mainchain", cc)
-	AdminID := "ntienbo"
+	stub := util.NewMockStubExtend(shim.NewMockStub("hstx", cc), cc)
+	admin := "Admin1"
+	pubKey, _ := ioutil.ReadFile("./sample/pk.pem")
+	pk := base64.StdEncoding.EncodeToString(pubKey)
 
-	//	rs5 := checkCallFuncInvoke(t, stub, [][]byte{[]byte("CreateAdmin"), []byte("Admin"), []byte("pulic key")})
-	rs7 := checkCallFuncInvoke(t, stub, [][]byte{[]byte("CreateAdmin"), []byte("Admin1"), []byte("pulic key")})
+	// Create a new Admin - automatically fail if not succeess
+	fmt.Println("Invoke CreateAdmin ", admin)
+	rs := checkCallFuncInvoke(t, stub, [][]byte{[]byte("CreateAdmin"), []byte(admin), []byte(pk)})
 
-	rs7 = checkCallFuncInvoke(t, stub, [][]byte{[]byte("UpdateAdmin"), []byte("a"), []byte("Name"), []byte("Newnew")})
+	// The invokeFunction returns adminID key
+	var r InvokeResponse
+	json.Unmarshal([]byte(rs), &r)
 
-	ProposalID := "a"
-	sig := "MEYCIQC7vKLzjw43HJ/9SqxUzZtfdBIdFks7qiIXiHitu8uqqQIhAKXNwpBDuWquPE/00l8isa6rh85ZYYf+dgb1khSqNr7O"
-	rs7 = checkCallFuncInvoke(t, stub, [][]byte{[]byte("CreateQuorum"), []byte(sig), []byte(AdminID), []byte(ProposalID)})
+	// Check if the created admin exist in the ledger
+	composite_key, _ := stub.CreateCompositeKey(models.ADMINTABLE, []string{r.Rows})
+	state, _ := stub.GetState(composite_key)
+	var ad models.Admin
+	json.Unmarshal([]byte(state), &ad)
 
-	//	rs6 = checkCallFuncQuerry(t, stub, [][]byte{[]byte("GetAllAdmin"), []byte("")})
-	rs6 := checkCallFuncQuerry(t, stub, [][]byte{[]byte("GetAdminByID"), []byte("a")})
-
-	//fmt.Printf("rs3: %v", rs3)
-	//	fmt.Printf("rs4: %v", rs4)
-	//	fmt.Printf("rs5: %v", rs5)
-	fmt.Printf("rs6: %v", rs6)
-	fmt.Printf("rs6: %v", rs7)
-	//	fmt.Printf("rs6: %v", rs8)
-
-	// check checkByID
+	assert.Equal(t, admin, ad.Name)
+	assert.Equal(t, pk, ad.PublicKey)
 }
