@@ -186,10 +186,10 @@ func (akcStub *AkcHighThroughput) Get(APIstub shim.ChaincodeStubInterface, args 
  *
  * @return A response structure indicating success or failure with a message
  */
-func (akcStub *AkcHighThroughput) Prune(APIstub shim.ChaincodeStubInterface, args []string) (bool, error) {
+func (akcStub *AkcHighThroughput) Prune(APIstub shim.ChaincodeStubInterface, args []string) ([]byte, error) {
 	// Check we have a valid number of ars
 	if len(args) < 2 {
-		return false, fmt.Errorf("Incorrect number of arguments, expecting 2")
+		return []byte(""), fmt.Errorf("Incorrect number of arguments, expecting 2")
 	}
 
 	// Retrieve the name of the variable to prune
@@ -208,78 +208,94 @@ func (akcStub *AkcHighThroughput) Prune(APIstub shim.ChaincodeStubInterface, arg
 	}
 
 	if pruneType != "PRUNE_FAST" && pruneType != "PRUNE_SAFE" {
-		return false, fmt.Errorf(fmt.Sprintf("Prune type %s is not supported", pruneType))
+		return []byte(""), fmt.Errorf(fmt.Sprintf("Prune type %s is not supported", pruneType))
 	}
 
 	// Get all delta rows for the variable
 	deltaResultsIterator, deltaErr := APIstub.GetStateByPartialCompositeKey("varName~key~op~value~txID", queryStr)
 
 	if deltaErr != nil {
-		return false, fmt.Errorf(fmt.Sprintf("Could not retrieve value for %s: %s", name, deltaErr.Error()))
+		return []byte(""), fmt.Errorf(fmt.Sprintf("Could not retrieve value for %s: %s", name, deltaErr.Error()))
 	}
 	defer deltaResultsIterator.Close()
 
 	if pruneType == "PRUNE_FAST" {
 		// Check the variable existed
 		if !deltaResultsIterator.HasNext() {
-			return false, fmt.Errorf(fmt.Sprintf("No variable by the name %s exists", name))
+			return []byte(""), fmt.Errorf(fmt.Sprintf("No variable by the name %s exists", name))
 		}
 
 		// Iterate through result set computing final value while iterating and deleting each key
-		var finalVal float64
+		var dataResult ResponseData
+		var responseMap map[string]ResponseData
+		responseMap = make(map[string]ResponseData)
 		var i int
+
 		for i = 0; deltaResultsIterator.HasNext(); i++ {
 			// Get the next row
 			responseRange, nextErr := deltaResultsIterator.Next()
 			if nextErr != nil {
-				return false, fmt.Errorf(nextErr.Error())
+				return []byte(""), fmt.Errorf(nextErr.Error())
 			}
 
 			// Split the key into its composite parts
 			_, keyParts, splitKeyErr := APIstub.SplitCompositeKey(responseRange.Key)
 			if splitKeyErr != nil {
-				return false, fmt.Errorf(splitKeyErr.Error())
+				return []byte(""), fmt.Errorf(splitKeyErr.Error())
 			}
 
 			// Retrieve the operation and value
+			key = keyParts[1]
 			operation := keyParts[2]
 			valueStr := keyParts[3]
 
-			// Convert the value to a float
-			value, convErr := strconv.ParseFloat(valueStr, 64)
-			if convErr != nil {
-				return false, fmt.Errorf(convErr.Error())
+			if responseMap[key].Key == key {
+				mapValue, convErr := strconv.ParseFloat(responseMap[key].Data[0], 64)
+				if convErr != nil {
+					return []byte(""), fmt.Errorf(convErr.Error())
+				}
+
+				value, convErr2 := strconv.ParseFloat(valueStr, 64)
+				if convErr2 != nil {
+					return []byte(""), fmt.Errorf(convErr2.Error())
+				}
+
+				switch operation {
+				case "OP_ADD":
+					mapValue += value
+				case "OP_SUB":
+					mapValue -= value
+				default:
+					return []byte(""), fmt.Errorf(fmt.Sprintf("Unrecognized operation %s", operation))
+				}
+
+				responseMap[key].Data[0] = fmt.Sprintf("%f", mapValue)
+			} else {
+				dataResult.Key = key
+				dataResult.Data = []string{valueStr}
+				responseMap[key] = dataResult
 			}
 
 			// Delete the row from the ledger
 			deltaRowDelErr := APIstub.DelState(responseRange.Key)
 			if deltaRowDelErr != nil {
-				return false, fmt.Errorf(fmt.Sprintf("Could not delete delta row: %s", deltaRowDelErr.Error()))
+				return []byte(""), fmt.Errorf(fmt.Sprintf("Could not delete delta row: %s", deltaRowDelErr.Error()))
 			}
 
-			// Add the value of the deleted row to the final aggregate
-			switch operation {
-			case "OP_ADD":
-				finalVal += value
-			case "OP_SUB":
-				finalVal -= value
-			default:
-				return false, fmt.Errorf(fmt.Sprintf("Unrecognized operation %s", operation))
+			// Update the ledger with the final value and return
+			_, updateErr := akcStub.pruneFastUpdate(APIstub, name, key, valueStr)
+			if updateErr != nil {
+				return []byte(""), updateErr
 			}
 		}
 
-		// Update the ledger with the final value and return
-		updateResp := akcStub.Insert(APIstub, []string{name, key, strconv.FormatFloat(finalVal, 'f', -1, 64), "OP_ADD"})
-		if updateResp != nil {
-			return true, nil // return nil if prune success
-		}
-
-		return false, fmt.Errorf(fmt.Sprintf("Failed to prune variable: all rows deleted but could not update value to %f, variable no longer exists in ledger", finalVal))
+		jsonRes, _ := json.Marshal(responseMap)
+		return []byte(jsonRes), nil // return nil if prune success
 	} else if pruneType == "PRUNE_SAFE" {
 		// Get the var's value and process it
 		getResp, err := akcStub.Get(APIstub, queryStr)
 		if err != nil {
-			return false, fmt.Errorf(fmt.Sprintf("Could not retrieve the value of %s before pruning, pruning aborted: %s", name, key))
+			return []byte(""), fmt.Errorf(fmt.Sprintf("Could not retrieve the value of %s before pruning, pruning aborted: %s", name, key))
 		}
 
 		// Unmarshal get response
@@ -296,7 +312,7 @@ func (akcStub *AkcHighThroughput) Prune(APIstub shim.ChaincodeStubInterface, arg
 			// PutState before delete
 			_, errBackup := akcStub.pruneSafeBackup(APIstub, name, keyStrMap, valueStrMap)
 			if errBackup != nil {
-				return false, errBackup
+				return []byte(""), errBackup
 			}
 
 			// Delete each row
@@ -304,25 +320,25 @@ func (akcStub *AkcHighThroughput) Prune(APIstub shim.ChaincodeStubInterface, arg
 			for i = 0; deltaResultsIterator.HasNext(); i++ {
 				responseRange, nextErr := deltaResultsIterator.Next()
 				if nextErr != nil {
-					return false, fmt.Errorf(fmt.Sprintf("Could not retrieve next row for pruning: %s", nextErr.Error()))
+					return []byte(""), fmt.Errorf(fmt.Sprintf("Could not retrieve next row for pruning: %s", nextErr.Error()))
 				}
 
 				deltaRowDelErr := APIstub.DelState(responseRange.Key)
 				if deltaRowDelErr != nil {
-					return false, fmt.Errorf(fmt.Sprintf("Could not delete delta row: %s", deltaRowDelErr.Error()))
+					return []byte(""), fmt.Errorf(fmt.Sprintf("Could not delete delta row: %s", deltaRowDelErr.Error()))
 				}
 			}
 
 			// DelState after delete row
 			_, errDel := akcStub.pruneSafeUpdate(APIstub, name, keyStrMap, valueStrMap)
 			if errDel != nil {
-				return false, errDel
+				return []byte(""), errDel
 			}
 		}
 
-		return true, nil
+		return getResp, nil
 	} else {
-		return false, fmt.Errorf("Incorect option for prune or something else ! Try again.")
+		return []byte(""), fmt.Errorf("Incorect option for prune or something else ! Try again.")
 	}
 }
 
@@ -412,6 +428,15 @@ func (akcStub *AkcHighThroughput) pruneSafeUpdate(APIstub shim.ChaincodeStubInte
 	delErr := APIstub.DelState(fmt.Sprintf("%s_%s_PRUNE_BACKUP", name, key))
 	if delErr != nil {
 		return false, fmt.Errorf(fmt.Sprintf("Could not delete backup value %s_PRUNE_BACKUP, this does not affect the ledger but should be removed manually", name))
+	}
+
+	return true, nil
+}
+
+func (akcStub *AkcHighThroughput) pruneFastUpdate(APIstub shim.ChaincodeStubInterface, name, key, valueStr string) (bool, error) {
+	updateResp := akcStub.Insert(APIstub, []string{name, key, valueStr, "OP_ADD"})
+	if updateResp != nil {
+		return false, fmt.Errorf(fmt.Sprintf("Could not insert the final value of the variable after pruning, name %s, key %s", name, key))
 	}
 
 	return true, nil

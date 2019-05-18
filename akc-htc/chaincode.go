@@ -66,7 +66,7 @@ func prune(stub shim.ChaincodeStubInterface, args []string) (string, error) {
 	akc := AkcHighThroughput{}
 	check, err := akc.Prune(stub, args)
 
-	return strconv.FormatBool(check), err
+	return fmt.Sprintf("%s", check), err
 }
 
 func delete(stub shim.ChaincodeStubInterface, args []string) (string, error) {
