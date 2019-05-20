@@ -23,11 +23,7 @@ func (admin *Admin) CreateAdmin(stub shim.ChaincodeStubInterface, args []string)
 	Name := args[0]
 	Publickey := args[1]
 
-<<<<<<< HEAD
-	err := Createdata(stub, models.ADMINTABLE, []string{AdminID}, &Admin{AdminID: AdminID, Name: Name, PublicKey: Publickey})
-=======
-	err := util.Create_data_(stub, models.ADMINTABLE, []string{AdminID}, &Admin{AdminID: AdminID, Name: Name, PublicKey: Publickey})
->>>>>>> badc9260e8d734fea630a3c9a83d7d229847bdab
+	err := util.Createdata(stub, models.ADMINTABLE, []string{AdminID}, &Admin{AdminID: AdminID, Name: Name, PublicKey: Publickey})
 
 	if err != nil {
 		resErr := ResponseError{ERR5, fmt.Sprintf("%s %s", ResCodeDict[ERR5], "")}
@@ -44,11 +40,7 @@ func (admin *Admin) UpdateAdmin(stub shim.ChaincodeStubInterface, args []string)
 	// get admin information
 	var admin_tmp Admin
 	AdminID := args[0]
-<<<<<<< HEAD
-	admin_rs, err := Getdatabyid(stub, AdminID, models.ADMINTABLE)
-=======
-	admin_rs, err := util.Get_data_byid_(stub, AdminID, models.ADMINTABLE)
->>>>>>> badc9260e8d734fea630a3c9a83d7d229847bdab
+	admin_rs, err := util.Getdatabyid(stub, AdminID, models.ADMINTABLE)
 	if err != nil {
 		resErr := ResponseError{ERR4, fmt.Sprintf("%s %s", ResCodeDict[ERR4], err.Error())}
 		return RespondError(resErr)
@@ -62,11 +54,7 @@ func (admin *Admin) UpdateAdmin(stub shim.ChaincodeStubInterface, args []string)
 		admin_tmp.PublicKey = args[2]
 	}
 
-<<<<<<< HEAD
-	err = Changeinfo(stub, models.ADMINTABLE, []string{AdminID}, &Admin{AdminID: AdminID, Name: admin_tmp.Name, PublicKey: admin_tmp.PublicKey})
-=======
-	err = util.Change_info_(stub, models.ADMINTABLE, []string{AdminID}, &Admin{AdminID: AdminID, Name: admin_tmp.Name, PublicKey: admin_tmp.PublicKey})
->>>>>>> badc9260e8d734fea630a3c9a83d7d229847bdab
+	err = util.Changeinfo(stub, models.ADMINTABLE, []string{AdminID}, &Admin{AdminID: AdminID, Name: admin_tmp.Name, PublicKey: admin_tmp.PublicKey})
 	if err != nil {
 		//Overwrite fail
 		resErr := ResponseError{ERR5, fmt.Sprintf("%s %s", ResCodeDict[ERR5], err.Error())}

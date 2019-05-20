@@ -9,9 +9,9 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/Akachain/akc-go-sdk/common"
+	. "github.com/Akachain/akc-go-sdk/common"
 	"github.com/Akachain/akc-go-sdk/hstx/models"
-	. "github.com/Akachain/akc-go-sdk/util"
+	"github.com/Akachain/akc-go-sdk/util"
 	"github.com/hyperledger/fabric/core/chaincode/shim"
 	pb "github.com/hyperledger/fabric/protos/peer"
 	"github.com/mitchellh/mapstructure"
@@ -26,8 +26,8 @@ type Quorum models.Quorum
 func (quorum *Quorum) CreateQuorum(stub shim.ChaincodeStubInterface, args []string) pb.Response {
 	if len(args) != 3 {
 		//Invalid arguments
-		resErr := common.ResponseError{common.ERR2, common.ResCodeDict[common.ERR2]}
-		return common.RespondError(resErr)
+		resErr := ResponseError{ERR2, ResCodeDict[ERR2]}
+		return RespondError(resErr)
 	}
 	Signature := args[0]
 	AdminID := args[1]
@@ -41,16 +41,16 @@ func (quorum *Quorum) CreateQuorum(stub shim.ChaincodeStubInterface, args []stri
 
 	resultsIterator, err := stub.GetQueryResult(queryString)
 	if err != nil {
-		resErr := common.ResponseError{common.ERR4, fmt.Sprintf("%s %s %s", common.ResCodeDict[common.ERR4], err.Error(), common.GetLine())}
-		return common.RespondError(resErr)
+		resErr := ResponseError{ERR4, fmt.Sprintf("%s %s %s", ResCodeDict[ERR4], err.Error(), GetLine())}
+		return RespondError(resErr)
 	}
 	defer resultsIterator.Close()
 
 	for resultsIterator.HasNext() {
 		queryResponse, err := resultsIterator.Next()
 		if err != nil {
-			resErr := common.ResponseError{common.ERR4, fmt.Sprintf("%s %s %s", common.ResCodeDict[common.ERR4], err.Error(), common.GetLine())}
-			return common.RespondError(resErr)
+			resErr := ResponseError{ERR4, fmt.Sprintf("%s %s %s", ResCodeDict[ERR4], err.Error(), GetLine())}
+			return RespondError(resErr)
 		}
 		fmt.Printf("queryResponse.Value:%v \n", queryResponse.Value)
 		_ = json.Unmarshal(queryResponse.Value, quorumResult)
@@ -59,46 +59,46 @@ func (quorum *Quorum) CreateQuorum(stub shim.ChaincodeStubInterface, args []stri
 	fmt.Printf("quorumResult:%v \n", quorumResult)
 
 	if 0 == strings.Compare(quorumResult.AdminID, AdminID) {
-		resErr := common.ResponseError{common.ERR9, fmt.Sprintf("%s %s %s", common.ResCodeDict[common.ERR9], "Only signed once ", common.GetLine())}
-		return common.RespondError(resErr)
+		resErr := ResponseError{ERR9, fmt.Sprintf("%s %s %s", ResCodeDict[ERR9], "Only signed once ", GetLine())}
+		return RespondError(resErr)
 	}
 
 	fmt.Printf("Pass if quorum.AdminID == AdminID \n")
 
 	//get data to verify
-	rs, errData := Getdatabyid(stub, ProposalID, models.PROPOSALTABLE)
+	rs, errData := util.Getdatabyid(stub, ProposalID, models.PROPOSALTABLE)
 	dataProposal := rs.(*Proposal)
 	fmt.Printf("Pass get data to verify \n")
 
 	if errData != nil {
-		resErr := common.ResponseError{common.ERR4, fmt.Sprintf("%s %s %s", common.ResCodeDict[common.ERR4], errData.Error(), common.GetLine())}
-		return common.RespondError(resErr)
+		resErr := ResponseError{ERR4, fmt.Sprintf("%s %s %s", ResCodeDict[ERR4], errData.Error(), GetLine())}
+		return RespondError(resErr)
 	}
 	fmt.Printf("Signature %v\n", Signature)
 	fmt.Printf("AdminID %v\n", AdminID)
 	fmt.Printf("ProposalID %v\n", ProposalID)
 	fmt.Printf("dataProposal %v\n", dataProposal)
 
-	rs, errAd := Getdatabyid(stub, AdminID, models.ADMINTABLE)
+	rs, errAd := util.Getdatabyid(stub, AdminID, models.ADMINTABLE)
 
 	mapstructure.Decode(rs, admin)
 	fmt.Printf("Amdin: %v\n", admin)
 
 	if errAd != nil {
-		resErr := common.ResponseError{common.ERR4, fmt.Sprintf("%s %s %s", common.ResCodeDict[common.ERR4], errAd.Error(), common.GetLine())}
-		return common.RespondError(resErr)
+		resErr := ResponseError{ERR4, fmt.Sprintf("%s %s %s", ResCodeDict[ERR4], errAd.Error(), GetLine())}
+		return RespondError(resErr)
 	}
 	block, _ := pem.Decode([]byte(admin.PublicKey))
 	fmt.Printf("admin.PublicKey %v\n", admin.PublicKey)
 
 	if block == nil {
-		resErr := common.ResponseError{common.ERR6, fmt.Sprintf("%s %s %s", common.ResCodeDict[common.ERR6], "block err", common.GetLine())}
-		return common.RespondError(resErr)
+		resErr := ResponseError{ERR6, fmt.Sprintf("%s %s %s", ResCodeDict[ERR6], "block err", GetLine())}
+		return RespondError(resErr)
 	}
 	pub, err := x509.ParsePKCS1PublicKey(block.Bytes)
 	if err != nil {
-		resErr := common.ResponseError{common.ERR6, fmt.Sprintf("%s %s %s", common.ResCodeDict[common.ERR6], err.Error(), common.GetLine())}
-		return common.RespondError(resErr)
+		resErr := ResponseError{ERR6, fmt.Sprintf("%s %s %s", ResCodeDict[ERR6], err.Error(), GetLine())}
+		return RespondError(resErr)
 	}
 	hashFunc := cp.SHA512
 	h := hashFunc.New()
@@ -108,37 +108,37 @@ func (quorum *Quorum) CreateQuorum(stub shim.ChaincodeStubInterface, args []stri
 	fmt.Printf("result %v\n", result)
 
 	if result != nil {
-		resErr := common.ResponseError{common.ERR8, fmt.Sprintf("%s %s %s", common.ResCodeDict[common.ERR8], result.Error(), common.GetLine())}
-		return common.RespondError(resErr)
+		resErr := ResponseError{ERR8, fmt.Sprintf("%s %s %s", ResCodeDict[ERR8], result.Error(), GetLine())}
+		return RespondError(resErr)
 	}
 
 	QuorumID := xid.New().String()
 	fmt.Printf("QuorumID %v\n", QuorumID)
 
-	err1 := Createdata(stub, models.QUORUMTABLE, []string{QuorumID}, &Quorum{AdminID: AdminID, QuorumID: QuorumID, ProposalID: ProposalID, Status: "Verify"})
+	err1 := util.Createdata(stub, models.QUORUMTABLE, []string{QuorumID}, &Quorum{AdminID: AdminID, QuorumID: QuorumID, ProposalID: ProposalID, Status: "Verify"})
 	if err1 != nil {
-		resErr := common.ResponseError{common.ERR6, fmt.Sprintf("%s %s %s", common.ResCodeDict[common.ERR6], err1.Error(), common.GetLine())}
-		return common.RespondError(resErr)
+		resErr := ResponseError{ERR6, fmt.Sprintf("%s %s %s", ResCodeDict[ERR6], err1.Error(), GetLine())}
+		return RespondError(resErr)
 	}
-	resSuc := common.ResponseSuccess{common.SUCCESS, common.ResCodeDict[common.SUCCESS], QuorumID}
-	return common.RespondSuccess(resSuc)
+	resSuc := ResponseSuccess{SUCCESS, ResCodeDict[SUCCESS], QuorumID}
+	return RespondSuccess(resSuc)
 }
 
 // GetQuorumByID
 func (quorum *Quorum) GetQuorumByID(stub shim.ChaincodeStubInterface, args []string) pb.Response {
 	if len(args) != 1 {
 		//Invalid arguments
-		resErr := common.ResponseError{common.ERR2, common.ResCodeDict[common.ERR2]}
-		return common.RespondError(resErr)
+		resErr := ResponseError{ERR2, ResCodeDict[ERR2]}
+		return RespondError(resErr)
 	}
 	DataID := args[0]
-	res := GetDataByID(stub, DataID, quorum, models.QUORUMTABLE)
+	res := util.GetDataByID(stub, DataID, quorum, models.QUORUMTABLE)
 	return res
 }
 
 // GetAllQuorum
 func (quorum *Quorum) GetAllQuorum(stub shim.ChaincodeStubInterface) pb.Response {
-	res := GetAllData(stub, quorum, models.QUORUMTABLE)
+	res := util.GetAllData(stub, quorum, models.QUORUMTABLE)
 	return res
 }
 
