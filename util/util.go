@@ -5,6 +5,7 @@ import (
 	"errors"
 	"fmt"
 	"reflect" // This is only used in InterfaceIsNil
+	"testing"
 
 	"github.com/hyperledger/fabric/core/chaincode/shim"
 )
@@ -236,4 +237,24 @@ func DeleteTableRow(
 	// Return with success
 	err = nil
 	return
+}
+
+// MockInvokeTransaction creates a mock invoke transaction using MockStubExtend
+func MockInvokeTransaction(t *testing.T, stub *MockStubExtend, args [][]byte) string {
+	res := stub.MockInvoke("1", args)
+	if res.Status != shim.OK {
+		return string(res.Payload)
+	}
+	return string(res.Payload)
+}
+
+// MockQueryTransaction creates a mock query transaction using MockStubExtend
+func MockQueryTransaction(t *testing.T, stub *MockStubExtend, args [][]byte) string {
+	res := stub.MockInvoke("1", args)
+	if res.Status != shim.OK {
+		t.FailNow()
+		return string(res.Payload)
+	}
+	t.FailNow()
+	return string(res.Payload)
 }

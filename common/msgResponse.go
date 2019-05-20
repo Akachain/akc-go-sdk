@@ -45,6 +45,12 @@ var ResCodeDict = map[string]string{
 	"AKC0012": "Proposal Commit not exist!",
 }
 
+type InvokeResponse struct {
+	Status string `json:"status"`
+	Msg    string `json:"msg"`
+	Rows   string `json:"rows"`
+}
+
 type ResponseSuccess struct {
 	ResCode string
 	Msg     string
@@ -62,7 +68,7 @@ func RespondSuccess(res ResponseSuccess) pb.Response {
 	}
 	return pb.Response{
 		Status:  OK,
-		Payload: []byte("{\"status\":\"" + res.ResCode + "\", \"msg\":\"" + res.Msg + "\", \"rows\":" + res.Payload + "}"),
+		Payload: []byte("{\"status\":\"" + res.ResCode + "\", \"msg\":\"" + res.Msg + "\", \"rows\":\"" + res.Payload + "\"}"),
 	}
 }
 

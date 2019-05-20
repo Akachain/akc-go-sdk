@@ -5,9 +5,9 @@ import (
 
 	"github.com/rs/xid"
 
-	"github.com/Akachain/akc-go-sdk/common"
+	. "github.com/Akachain/akc-go-sdk/common"
 	"github.com/Akachain/akc-go-sdk/hstx/models"
-	. "github.com/Akachain/akc-go-sdk/util"
+	"github.com/Akachain/akc-go-sdk/util"
 	"github.com/hyperledger/fabric/core/chaincode/shim"
 	pb "github.com/hyperledger/fabric/protos/peer"
 	"github.com/mitchellh/mapstructure"
@@ -15,43 +15,43 @@ import (
 
 type Admin models.Admin
 
-//High secure transaction Admin handle
-// ------------------- //
-//create Admin
+//CreateAdmin adds an admin document that contain the AdminID and his Public Key
 func (admin *Admin) CreateAdmin(stub shim.ChaincodeStubInterface, args []string) pb.Response {
-	if len(args) != 2 {
-		//Invalid arguments
-		resErr := common.ResponseError{common.ERR2, common.ResCodeDict[common.ERR2]}
-		return common.RespondError(resErr)
-	}
+	util.CheckChaincodeFunctionCallWellFormedness(args, 2)
+
 	AdminID := xid.New().String()
 	Name := args[0]
 	Publickey := args[1]
 
+<<<<<<< HEAD
 	err := Createdata(stub, models.ADMINTABLE, []string{AdminID}, &Admin{AdminID: AdminID, Name: Name, PublicKey: Publickey})
+=======
+	err := util.Create_data_(stub, models.ADMINTABLE, []string{AdminID}, &Admin{AdminID: AdminID, Name: Name, PublicKey: Publickey})
+>>>>>>> badc9260e8d734fea630a3c9a83d7d229847bdab
 
 	if err != nil {
-		resErr := common.ResponseError{common.ERR5, fmt.Sprintf("%s %s", common.ResCodeDict[common.ERR5], "")}
-		return common.RespondError(resErr)
+		resErr := ResponseError{ERR5, fmt.Sprintf("%s %s", ResCodeDict[ERR5], "")}
+		return RespondError(resErr)
 	}
-	resSuc := common.ResponseSuccess{common.SUCCESS, common.ResCodeDict[common.SUCCESS], AdminID}
-	return common.RespondSuccess(resSuc)
+	resSuc := ResponseSuccess{SUCCESS, ResCodeDict[SUCCESS], AdminID}
+	return RespondSuccess(resSuc)
 }
 
 //UpdateAdmin
 func (admin *Admin) UpdateAdmin(stub shim.ChaincodeStubInterface, args []string) pb.Response {
-	if len(args) != 3 {
-		//Invalid arguments
-		resErr := common.ResponseError{common.ERR2, common.ResCodeDict[common.ERR2]}
-		return common.RespondError(resErr)
-	}
+	util.CheckChaincodeFunctionCallWellFormedness(args, 3)
+
 	// get admin information
 	var admin_tmp Admin
 	AdminID := args[0]
+<<<<<<< HEAD
 	admin_rs, err := Getdatabyid(stub, AdminID, models.ADMINTABLE)
+=======
+	admin_rs, err := util.Get_data_byid_(stub, AdminID, models.ADMINTABLE)
+>>>>>>> badc9260e8d734fea630a3c9a83d7d229847bdab
 	if err != nil {
-		resErr := common.ResponseError{common.ERR4, fmt.Sprintf("%s %s", common.ResCodeDict[common.ERR4], err.Error())}
-		return common.RespondError(resErr)
+		resErr := ResponseError{ERR4, fmt.Sprintf("%s %s", ResCodeDict[ERR4], err.Error())}
+		return RespondError(resErr)
 	}
 
 	//Find Field Need update
@@ -62,31 +62,35 @@ func (admin *Admin) UpdateAdmin(stub shim.ChaincodeStubInterface, args []string)
 		admin_tmp.PublicKey = args[2]
 	}
 
+<<<<<<< HEAD
 	err = Changeinfo(stub, models.ADMINTABLE, []string{AdminID}, &Admin{AdminID: AdminID, Name: admin_tmp.Name, PublicKey: admin_tmp.PublicKey})
+=======
+	err = util.Change_info_(stub, models.ADMINTABLE, []string{AdminID}, &Admin{AdminID: AdminID, Name: admin_tmp.Name, PublicKey: admin_tmp.PublicKey})
+>>>>>>> badc9260e8d734fea630a3c9a83d7d229847bdab
 	if err != nil {
 		//Overwrite fail
-		resErr := common.ResponseError{common.ERR5, fmt.Sprintf("%s %s", common.ResCodeDict[common.ERR5], err.Error())}
-		return common.RespondError(resErr)
+		resErr := ResponseError{ERR5, fmt.Sprintf("%s %s", ResCodeDict[ERR5], err.Error())}
+		return RespondError(resErr)
 	}
-	resSuc := common.ResponseSuccess{common.SUCCESS, common.ResCodeDict[common.SUCCESS], "[]"}
-	return common.RespondSuccess(resSuc)
+	resSuc := ResponseSuccess{SUCCESS, ResCodeDict[SUCCESS], "[]"}
+	return RespondSuccess(resSuc)
 }
 
 //GetAdminByID
 func (admin *Admin) GetAdminByID(stub shim.ChaincodeStubInterface, args []string) pb.Response {
 	if len(args) != 1 {
 		//Invalid arguments
-		resErr := common.ResponseError{common.ERR2, common.ResCodeDict[common.ERR2]}
-		return common.RespondError(resErr)
+		resErr := ResponseError{ERR2, ResCodeDict[ERR2]}
+		return RespondError(resErr)
 	}
 	DataID := args[0]
-	res := GetDataByID(stub, DataID, admin, models.ADMINTABLE)
+	res := util.GetDataByID(stub, DataID, admin, models.ADMINTABLE)
 	return res
 }
 
 //GetAllAdmin
 func (admin *Admin) GetAllAdmin(stub shim.ChaincodeStubInterface) pb.Response {
-	res := GetAllData(stub, admin, models.ADMINTABLE)
+	res := util.GetAllData(stub, admin, models.ADMINTABLE)
 	return res
 }
 
