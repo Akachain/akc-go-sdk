@@ -29,7 +29,7 @@ func TestMainchain(t *testing.T) {
 	stub := shim.NewMockStub("mainchain", cc)
 	AdminID := "ntienbo"
 
-	//	rs5 := checkCallFuncInvoke(t, stub, [][]byte{[]byte("CreateAdmin"), []byte("Admin"), []byte("pulic key")})
+	//rs5 := checkCallFuncInvoke(t, stub, [][]byte{[]byte("CreateAdmin"), []byte("Admin"), []byte("pulic key")})
 	rs7 := checkCallFuncInvoke(t, stub, [][]byte{[]byte("CreateAdmin"), []byte("Admin1"), []byte("pulic key")})
 
 	rs7 = checkCallFuncInvoke(t, stub, [][]byte{[]byte("UpdateAdmin"), []byte("a"), []byte("Name"), []byte("Newnew")})
@@ -42,11 +42,11 @@ func TestMainchain(t *testing.T) {
 	rs6 = checkCallFuncQuerry(t, stub, [][]byte{[]byte("GetAdminByID"), []byte("a")})
 
 	//fmt.Printf("rs3: %v", rs3)
-	//	fmt.Printf("rs4: %v", rs4)
-	//	fmt.Printf("rs5: %v", rs5)
+	//fmt.Printf("rs4: %v", rs4)
+	//fmt.Printf("rs5: %v", rs5)
 	fmt.Printf("rs6: %v", rs6)
 	fmt.Printf("rs6: %v", rs7)
-	//	fmt.Printf("rs6: %v", rs8)
+	//fmt.Printf("rs6: %v", rs8)
 
-	// check checkByID
+	//check checkByID
 }
