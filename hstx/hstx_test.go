@@ -14,24 +14,6 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
-func checkCallFuncInvoke(t *testing.T, stub *util.MockStubExtend, args [][]byte) string {
-	res := stub.MockInvoke("1", args)
-	if res.Status != shim.OK {
-		return string(res.Payload)
-	}
-	return string(res.Payload)
-}
-
-func checkCallFuncQuerry(t *testing.T, stub *util.MockStubExtend, args [][]byte) string {
-	res := stub.MockInvoke("1", args)
-	if res.Status != shim.OK {
-		t.FailNow()
-		return string(res.Payload)
-	}
-	t.FailNow()
-	return string(res.Payload)
-}
-
 func TestAdmin(t *testing.T) {
 	// Setup mockextend
 	cc := new(Chaincode)
@@ -42,18 +24,19 @@ func TestAdmin(t *testing.T) {
 
 	// Create a new Admin - automatically fail if not succeess
 	fmt.Println("Invoke CreateAdmin ", admin)
-	rs := checkCallFuncInvoke(t, stub, [][]byte{[]byte("CreateAdmin"), []byte(admin), []byte(pk)})
+	rs := util.MockInvokeTransaction(t, stub, [][]byte{[]byte("CreateAdmin"), []byte(admin), []byte(pk)})
 
 	// The invokeFunction returns adminID key
 	var r InvokeResponse
 	json.Unmarshal([]byte(rs), &r)
 
 	// Check if the created admin exist in the ledger
-	composite_key, _ := stub.CreateCompositeKey(models.ADMINTABLE, []string{r.Rows})
-	state, _ := stub.GetState(composite_key)
+	compositeKey, _ := stub.CreateCompositeKey(models.ADMINTABLE, []string{r.Rows})
+	state, _ := stub.GetState(compositeKey)
 	var ad models.Admin
 	json.Unmarshal([]byte(state), &ad)
 
+	// Check if the created admin information is correct
 	assert.Equal(t, admin, ad.Name)
 	assert.Equal(t, pk, ad.PublicKey)
 }
