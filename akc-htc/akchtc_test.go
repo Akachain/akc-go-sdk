@@ -30,7 +30,8 @@ func TestAkcHighThroughtput(t *testing.T) {
 
 	// Test Case success
 	checkInvoke(t, stub, [][]byte{[]byte("insert"), []byte("Merchant"), []byte("1234567890"), []byte("100"), []byte("OP_ADD")})
-	checkInvoke(t, stub, [][]byte{[]byte("insert"), []byte("Merchant"), []byte("0987654321"), []byte("50"), []byte("OP_ADD")})
+	checkInvoke(t, stub, [][]byte{[]byte("insert"), []byte("Merchant"), []byte("0987654321"), []byte("50"), []byte("OP_SUB")})
+	checkInvoke(t, stub, [][]byte{[]byte("insert"), []byte("Merchant"), []byte("0987654321"), []byte("25"), []byte("OP_ADD")})
 	checkInvoke(t, stub, [][]byte{[]byte("insert"), []byte("Merchant"), []byte("1234567890"), []byte("99"), []byte("OP_SUB")})
 	checkInvoke(t, stub, [][]byte{[]byte("insert"), []byte("Merchant"), []byte("88662233"), []byte("50"), []byte("OP_ADD")})
 

@@ -136,6 +136,10 @@ func (akcStub *AkcHighThroughput) Get(APIstub shim.ChaincodeStubInterface, args 
 		key := keyParts[1]
 		operation := keyParts[2]
 		valueStr := keyParts[3]
+		value, convErr2 := strconv.ParseFloat(valueStr, 64)
+		if convErr2 != nil {
+			return []byte(""), fmt.Errorf(convErr2.Error())
+		}
 
 		if responseMap[key].Key == key {
 			mapValue, convErr := strconv.ParseFloat(responseMap[key].Data[0], 64)
@@ -143,24 +147,24 @@ func (akcStub *AkcHighThroughput) Get(APIstub shim.ChaincodeStubInterface, args 
 				return []byte(""), fmt.Errorf(convErr.Error())
 			}
 
-			value, convErr2 := strconv.ParseFloat(valueStr, 64)
-			if convErr2 != nil {
-				return []byte(""), fmt.Errorf(convErr2.Error())
+			returnValue, errVal := akcStub.getValueByOperator(operation, mapValue, value)
+
+			if errVal != nil {
+				return nil, errVal
 			}
 
-			switch operation {
-			case "OP_ADD":
-				mapValue += value
-			case "OP_SUB":
-				mapValue -= value
-			default:
-				return []byte(""), fmt.Errorf(fmt.Sprintf("Unrecognized operation %s", operation))
-			}
-
-			responseMap[key].Data[0] = fmt.Sprintf("%f", mapValue)
+			responseMap[key].Data[0] = returnValue
 		} else {
+			firstValue, _ := strconv.ParseFloat("0", 64)
 			dataResult.Key = key
-			dataResult.Data = []string{valueStr}
+
+			returnValue, errVal := akcStub.getValueByOperator(operation, firstValue, value)
+
+			if errVal != nil {
+				return nil, errVal
+			}
+
+			dataResult.Data = []string{returnValue}
 			responseMap[key] = dataResult
 		}
 	}
@@ -440,4 +444,17 @@ func (akcStub *AkcHighThroughput) pruneFastUpdate(APIstub shim.ChaincodeStubInte
 	}
 
 	return true, nil
+}
+
+func (akcStub *AkcHighThroughput) getValueByOperator(operation string, currentValue, value float64) (string, error) {
+	switch operation {
+	case "OP_ADD":
+		currentValue += value
+	case "OP_SUB":
+		currentValue -= value
+	default:
+		return "0", fmt.Errorf(fmt.Sprintf("Unrecognized operation %s", operation))
+	}
+
+	return fmt.Sprintf("%v", currentValue), nil
 }
