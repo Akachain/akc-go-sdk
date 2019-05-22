@@ -20,14 +20,9 @@ type MockStubExtend struct {
 	*MockStub
 }
 
-type q struct {
-	regex string
-}
-
 // GetQueryResult overrides the same function in MockStub
 // that did not implement anything.
 func (stub *MockStubExtend) GetQueryResult(query string) (StateQueryIteratorInterface, error) {
-
 	// A sample query string is like this
 	// {"selector": {"_id": {"$regex": "^Quorum_"},"ProposalID": "a"}}
 	// we unmarshall the query string into a map of interface.

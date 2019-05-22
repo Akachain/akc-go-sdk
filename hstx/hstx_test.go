@@ -15,6 +15,11 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
+func TestDBHandle(t *testing.T) {
+	a := util.NewCouchDBHandler()
+	Logger.Debug(a)
+}
+
 func TestAdmin(t *testing.T) {
 	// Setup mockextend
 	cc := new(Chaincode)
