@@ -242,8 +242,8 @@ func DeleteTableRow(
 
 // MockInvokeTransaction creates a mock invoke transaction using MockStubExtend
 func MockInvokeTransaction(t *testing.T, stub *MockStubExtend, args [][]byte) string {
-	uuid := genTxID()
-	res := stub.MockInvoke(uuid, args)
+	txId := genTxID()
+	res := stub.MockInvoke(txId, args)
 	if res.Status != shim.OK {
 		return string(res.Payload)
 	}
@@ -252,8 +252,8 @@ func MockInvokeTransaction(t *testing.T, stub *MockStubExtend, args [][]byte) st
 
 // MockQueryTransaction creates a mock query transaction using MockStubExtend
 func MockQueryTransaction(t *testing.T, stub *MockStubExtend, args [][]byte) string {
-	uuid := genTxID()
-	res := stub.MockInvoke(uuid, args)
+	txId := genTxID()
+	res := stub.MockInvoke(txId, args)
 	if res.Status != shim.OK {
 		t.FailNow()
 		return string(res.Payload)
@@ -265,6 +265,6 @@ func MockQueryTransaction(t *testing.T, stub *MockStubExtend, args [][]byte) str
 // Generate random transaction ID
 func genTxID() string {
 	uid := uuid.Must(uuid.NewV4())
-	uuid := fmt.Sprintf("%s", uid)
-	return uuid
+	txId := fmt.Sprintf("%s", uid)
+	return txId
 }
