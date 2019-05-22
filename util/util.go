@@ -8,6 +8,7 @@ import (
 	"testing"
 
 	"github.com/hyperledger/fabric/core/chaincode/shim"
+	uuid "github.com/satori/go.uuid"
 )
 
 // Taken from https://stackoverflow.com/questions/13901819/quick-way-to-detect-empty-values-via-reflection-in-go
@@ -241,7 +242,8 @@ func DeleteTableRow(
 
 // MockInvokeTransaction creates a mock invoke transaction using MockStubExtend
 func MockInvokeTransaction(t *testing.T, stub *MockStubExtend, args [][]byte) string {
-	res := stub.MockInvoke("1", args)
+	txId := genTxID()
+	res := stub.MockInvoke(txId, args)
 	if res.Status != shim.OK {
 		return string(res.Payload)
 	}
@@ -250,11 +252,19 @@ func MockInvokeTransaction(t *testing.T, stub *MockStubExtend, args [][]byte) st
 
 // MockQueryTransaction creates a mock query transaction using MockStubExtend
 func MockQueryTransaction(t *testing.T, stub *MockStubExtend, args [][]byte) string {
-	res := stub.MockInvoke("1", args)
+	txId := genTxID()
+	res := stub.MockInvoke(txId, args)
 	if res.Status != shim.OK {
 		t.FailNow()
 		return string(res.Payload)
 	}
 	t.FailNow()
 	return string(res.Payload)
+}
+
+// Generate random transaction ID
+func genTxID() string {
+	uid := uuid.Must(uuid.NewV4())
+	txId := fmt.Sprintf("%s", uid)
+	return txId
 }
