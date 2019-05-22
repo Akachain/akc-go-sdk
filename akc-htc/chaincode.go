@@ -52,14 +52,21 @@ func get(stub shim.ChaincodeStubInterface, args []string) (string, error) {
 	akc := AkcHighThroughput{}
 	check, err := akc.Get(stub, args)
 
-	return fmt.Sprintf("%f", check), err
+	/** Demo parse data response from akchtc
+	// var dat map[string]ResponseData
+	// if err := json.Unmarshal(check, &dat); err != nil {
+	// 	panic(err)
+	// }
+	// fmt.Println(dat["0987654321"].Data[0])
+	*/
+	return fmt.Sprintf("%s", check), err
 }
 
 func prune(stub shim.ChaincodeStubInterface, args []string) (string, error) {
 	akc := AkcHighThroughput{}
 	check, err := akc.Prune(stub, args)
 
-	return strconv.FormatBool(check), err
+	return fmt.Sprintf("%s", check), err
 }
 
 func delete(stub shim.ChaincodeStubInterface, args []string) (string, error) {

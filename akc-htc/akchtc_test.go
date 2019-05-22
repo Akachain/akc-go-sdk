@@ -29,14 +29,19 @@ func TestAkcHighThroughtput(t *testing.T) {
 	stub := shim.NewMockStub("akchihi", cc)
 
 	// Test Case success
-	checkInvoke(t, stub, [][]byte{[]byte("insert"), []byte("Merchant"), []byte("1234567890"), []byte("100"), []byte("+")})
-	checkInvoke(t, stub, [][]byte{[]byte("insert"), []byte("Merchant"), []byte("0987654321"), []byte("50"), []byte("+")})
-	checkInvoke(t, stub, [][]byte{[]byte("insert"), []byte("Merchant"), []byte("1234567890"), []byte("99"), []byte("-")})
-	checkInvoke(t, stub, [][]byte{[]byte("insert"), []byte("Merchant"), []byte("88662233"), []byte("50"), []byte("+")})
+	checkInvoke(t, stub, [][]byte{[]byte("insert"), []byte("Merchant"), []byte("1234567890"), []byte("100"), []byte("OP_ADD")})
+	checkInvoke(t, stub, [][]byte{[]byte("insert"), []byte("Merchant"), []byte("0987654321"), []byte("50"), []byte("OP_SUB")})
+	checkInvoke(t, stub, [][]byte{[]byte("insert"), []byte("Merchant"), []byte("0987654321"), []byte("25"), []byte("OP_ADD")})
+	checkInvoke(t, stub, [][]byte{[]byte("insert"), []byte("Merchant"), []byte("1234567890"), []byte("99"), []byte("OP_SUB")})
+	checkInvoke(t, stub, [][]byte{[]byte("insert"), []byte("Merchant"), []byte("88662233"), []byte("50"), []byte("OP_ADD")})
 
 	res2 := checkInvoke(t, stub, [][]byte{[]byte("get"), []byte("Merchant"), []byte("1234567890")})
+	res21 := checkInvoke(t, stub, [][]byte{[]byte("get"), []byte("Merchant")})
 
 	res3 := checkInvoke(t, stub, [][]byte{[]byte("prune"), []byte("Merchant"), []byte("1234567890"), []byte("PRUNE_SAFE")})
+	// // Prune all with namespace
+	res31 := checkInvoke(t, stub, [][]byte{[]byte("prune"), []byte("Merchant"), []byte("PRUNE_SAFE")})
+	res32 := checkInvoke(t, stub, [][]byte{[]byte("prune"), []byte("Merchant"), []byte("PRUNE_SAFE")})
 
 	res4 := checkInvoke(t, stub, [][]byte{[]byte("prune"), []byte("Merchant"), []byte("0987654321"), []byte("PRUNE_FAST")})
 
@@ -63,7 +68,7 @@ func TestAkcHighThroughtput(t *testing.T) {
 	}
 
 	// // case 3: value not a number
-	insertFail3, insertMsg3 := checkInvokeFail(t, stub, [][]byte{[]byte("insert"), []byte("User"), []byte("2"), []byte("abc"), []byte("+")})
+	insertFail3, insertMsg3 := checkInvokeFail(t, stub, [][]byte{[]byte("insert"), []byte("User"), []byte("2"), []byte("abc"), []byte("OP_ADD")})
 
 	if !insertFail3 {
 		t.Errorf("Insert with value `abc` is fail, but response %v", insertFail3)
@@ -71,9 +76,9 @@ func TestAkcHighThroughtput(t *testing.T) {
 
 	// //============== Test case Get failure
 	// case 1: missing args
-	getFail1, getMsg1 := checkInvokeFail(t, stub, [][]byte{[]byte("get"), []byte("Merchant")})
-	if getMsg1 != "Incorrect number of arguments, expecting 2" {
-		t.Errorf("Check get fail: Assert expect 2 args, but response %v", getFail1)
+	getFail1, getMsg1 := checkInvokeFail(t, stub, [][]byte{[]byte("get")})
+	if getMsg1 != "Incorrect number of arguments, expecting 1" {
+		t.Errorf("Check get fail: Assert expect 1 args, but response %v", getFail1)
 	}
 
 	// case 2: No variable by name exists
@@ -85,8 +90,8 @@ func TestAkcHighThroughtput(t *testing.T) {
 	// //============== Test case Prune failure
 	// case 1: missing args
 	pruneFail1, pruneMsg1 := checkInvokeFail(t, stub, [][]byte{[]byte("prune"), []byte("Merchant")})
-	if pruneMsg1 != "Incorrect number of arguments, expecting 3" {
-		t.Errorf("Check prune fail: Assert expect 3 args, but response success. %v", pruneFail1)
+	if pruneMsg1 != "Incorrect number of arguments, expecting 2" {
+		t.Errorf("Check prune fail: Assert expect 2 args, but response success. %v", pruneFail1)
 	}
 
 	// case 2: No variable by name exists
@@ -101,9 +106,12 @@ func TestAkcHighThroughtput(t *testing.T) {
 		t.Errorf("Check prune fail: Assert expect type `PRUNE_SLOW` not supported, but response %v", pruneFail3)
 	}
 
-	//############# Test response #################
+	// //############# Test response #################
 	fmt.Printf("Get success response: %v\n", res2)
+	fmt.Printf("Get success response: %v\n", res21)
 	fmt.Printf("Prune success response: %v\n", res3)
+	fmt.Printf("Prune success response: %v\n", res31)
+	fmt.Printf("Prune success response: %v\n", res32)
 	fmt.Printf("Prune success response: %v\n", res4)
 	fmt.Printf("Delete success response: %v\n", res5)
 
