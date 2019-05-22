@@ -11,6 +11,7 @@ import (
 
 	"github.com/Akachain/akc-go-sdk/common"
 	"github.com/Akachain/akc-go-sdk/hstx/models"
+	"github.com/Akachain/akc-go-sdk/util"
 	. "github.com/Akachain/akc-go-sdk/util"
 	"github.com/hyperledger/fabric/core/chaincode/shim"
 	pb "github.com/hyperledger/fabric/protos/peer"
@@ -24,17 +25,13 @@ type Quorum models.Quorum
 // ------------------- //
 
 func (quorum *Quorum) CreateQuorum(stub shim.ChaincodeStubInterface, args []string) pb.Response {
-	if len(args) != 3 {
-		//Invalid arguments
-		resErr := common.ResponseError{common.ERR2, common.ResCodeDict[common.ERR2]}
-		return common.RespondError(resErr)
-	}
+	util.CheckChaincodeFunctionCallWellFormedness(args, 3)
 	Signature := args[0]
 	AdminID := args[1]
 	ProposalID := args[2]
 	var admin *Admin
 
-	//check Only signed once
+	// An admin can only create one signed quorum for any given proposal
 	quorumResult := new(Quorum)
 	queryString := fmt.Sprintf("{\"selector\": {\"_id\": {\"$regex\": \"^Quorum_\"},\"ProposalID\": \"%s\"}}", ProposalID)
 	fmt.Printf("queryString : %s \n", queryString)
