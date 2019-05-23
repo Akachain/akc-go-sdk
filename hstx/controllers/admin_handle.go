@@ -3,8 +3,6 @@ package controllers
 import (
 	"fmt"
 
-	"github.com/rs/xid"
-
 	. "github.com/Akachain/akc-go-sdk/common"
 	"github.com/Akachain/akc-go-sdk/hstx/models"
 	"github.com/Akachain/akc-go-sdk/util"
@@ -18,13 +16,12 @@ type Admin models.Admin
 //CreateAdmin adds an admin document that contain the AdminID and his Public Key
 func (admin *Admin) CreateAdmin(stub shim.ChaincodeStubInterface, args []string) pb.Response {
 	util.CheckChaincodeFunctionCallWellFormedness(args, 2)
-
-	AdminID := xid.New().String()
+	AdminID := stub.GetTxID()
 	Name := args[0]
 	Publickey := args[1]
+	Status := "Active"
 
-	err := util.Createdata(stub, models.ADMINTABLE, []string{AdminID}, &Admin{AdminID: AdminID, Name: Name, PublicKey: Publickey})
-
+	err := util.Createdata(stub, models.ADMINTABLE, []string{AdminID}, &Admin{AdminID: AdminID, Name: Name, PublicKey: Publickey, Status: Status})
 	if err != nil {
 		resErr := ResponseError{ERR5, fmt.Sprintf("%s %s", ResCodeDict[ERR5], "")}
 		return RespondError(resErr)
@@ -33,11 +30,10 @@ func (admin *Admin) CreateAdmin(stub shim.ChaincodeStubInterface, args []string)
 	return RespondSuccess(resSuc)
 }
 
-//UpdateAdmin
+//UpdateAdmin Edit Status to "Delete" if you want to delete admin
 func (admin *Admin) UpdateAdmin(stub shim.ChaincodeStubInterface, args []string) pb.Response {
 	util.CheckChaincodeFunctionCallWellFormedness(args, 3)
-
-	// get admin information
+	//get admin information
 	var admin_tmp Admin
 	AdminID := args[0]
 	admin_rs, err := util.Getdatabyid(stub, AdminID, models.ADMINTABLE)
@@ -52,9 +48,11 @@ func (admin *Admin) UpdateAdmin(stub shim.ChaincodeStubInterface, args []string)
 		admin_tmp.Name = args[2]
 	} else if args[1] == "PublicKey" {
 		admin_tmp.PublicKey = args[2]
+	} else if args[1] == "Status" {
+		admin_tmp.Status = args[2]
 	}
 
-	err = util.Changeinfo(stub, models.ADMINTABLE, []string{AdminID}, &Admin{AdminID: AdminID, Name: admin_tmp.Name, PublicKey: admin_tmp.PublicKey})
+	err = util.Changeinfo(stub, models.ADMINTABLE, []string{AdminID}, &Admin{AdminID: AdminID, Name: admin_tmp.Name, PublicKey: admin_tmp.PublicKey, Status: admin_tmp.Status})
 	if err != nil {
 		//Overwrite fail
 		resErr := ResponseError{ERR5, fmt.Sprintf("%s %s", ResCodeDict[ERR5], err.Error())}
@@ -66,11 +64,8 @@ func (admin *Admin) UpdateAdmin(stub shim.ChaincodeStubInterface, args []string)
 
 //GetAdminByID
 func (admin *Admin) GetAdminByID(stub shim.ChaincodeStubInterface, args []string) pb.Response {
-	if len(args) != 1 {
-		//Invalid arguments
-		resErr := ResponseError{ERR2, ResCodeDict[ERR2]}
-		return RespondError(resErr)
-	}
+	util.CheckChaincodeFunctionCallWellFormedness(args, 1)
+
 	DataID := args[0]
 	res := util.GetDataByID(stub, DataID, admin, models.ADMINTABLE)
 	return res

@@ -3,7 +3,7 @@ package models
 // COMMITTABLE - Table name in onchain
 const COMMITTABLE = "Commit_"
 
-// Proposal - struct
+// Commit - struct
 type Commit struct {
 	CommitID   string   `json:"CommitID"`
 	ProposalID string   `json:"ProposalID"`
