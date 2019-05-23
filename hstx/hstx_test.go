@@ -15,11 +15,6 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
-func TestDBHandle(t *testing.T) {
-	a := util.NewCouchDBHandler()
-	Logger.Debug(a)
-}
-
 func TestAdmin(t *testing.T) {
 	// Setup mockextend
 	cc := new(Chaincode)
@@ -48,9 +43,13 @@ func TestAdmin(t *testing.T) {
 }
 
 func TestQuorum(t *testing.T) {
-	// Setup mockextend
+	// Setup mockextend - split this to util - TODO
 	cc := new(Chaincode)
 	stub := util.NewMockStubExtend(shim.NewMockStub("hstx", cc), cc)
+	db := util.NewCouchDBHandler("hstx-test")
+	stub.SetCouchDBConfiguration(db)
+
+	// Sample data
 	admin := "Admin1"
 	pubKey, _ := ioutil.ReadFile("./sample/pk.pem")
 	pk := base64.StdEncoding.EncodeToString(pubKey)
