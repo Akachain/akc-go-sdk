@@ -86,7 +86,7 @@ func (t *Chaincode) Query(stub shim.ChaincodeStubInterface) pb.Response {
 		return controller_commit.GetAllCommit(stub)
 	}
 
-	return shim.Error(fmt.Sprintf("[Mainchain Chaincode] Invoke and Query not find function " + function))
+	return shim.Error(fmt.Sprintf("[Hstx Chaincode] Invoke and Query not find function " + function))
 }
 
 // The main function is only relevant in unit test mode. Only included here for completeness.

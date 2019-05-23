@@ -1,67 +1,63 @@
 package util
 
 import (
-	"encoding/json"
-	"fmt"
+	"container/list"
+	"errors"
+	"strings"
 
 	. "github.com/hyperledger/fabric/core/chaincode/shim"
 	pb "github.com/hyperledger/fabric/protos/peer"
+	"github.com/op/go-logging"
 )
 
-// MockStubExtend provides composition class for MockStub
-type MockStubExtend struct {
-	args [][]byte  // this is private in MockStub
-	cc   Chaincode // this is private in MockStub
-	*MockStub
-}
+// Logger for the shim package.
+var mockLogger = logging.MustGetLogger("mockStubExtend")
 
-type q struct {
-	regex string
+// MockStubExtend provides composition class for MockStub as some of the mockstub methods are not implemented
+type MockStubExtend struct {
+	args      [][]byte        // this is private in MockStub
+	cc        Chaincode       // this is private in MockStub
+	CouchDB   bool            // if we use couchDB
+	DbHandler *CouchDBHandler // if we use couchDB
+	*MockStub
 }
 
 // GetQueryResult overrides the same function in MockStub
 // that did not implement anything.
 func (stub *MockStubExtend) GetQueryResult(query string) (StateQueryIteratorInterface, error) {
+	// Query data from couchDB
+	rawdata, _ := stub.DbHandler.QueryDocument(query)
+	mockLogger.Debug(rawdata)
 
-	// A sample query string is like this
-	// {"selector": {"_id": {"$regex": "^Quorum_"},"ProposalID": "a"}}
-	// we unmarshall the query string into a map of interface.
-	var result map[string]interface{}
-	json.Unmarshal([]byte(query), &result)
-	selector := result["selector"].(map[string]interface{})
-
-	// Now go through all of the selector and try to filter
-	// the State Map in order of the selector
-	for key, value := range selector {
-		switch vv := value.(type) {
-		case string:
-			// This is the normal case
-			// Our value is a normal string "a"
-			fmt.Println(key, value.(string))
-		case interface{}:
-			// This is the nested object case
-			// Our value is {"$regex": "^Quorum_"}
-			i := vv.(map[string]interface{})
-			for k, v := range i {
-				if k == "regex" {
-					fmt.Println(k, v)
-				}
-			}
-		default:
-			fmt.Println("Not implemented")
-		}
+	// A list containing ledger keys filtered by the query string
+	var filteredKeys = list.New()
+	for _, k := range rawdata {
+		//[]map[string]interface{}
+		filteredKeys.PushBack(k["_id"])
 	}
 
-	r, _ := stub.GetStateByRange("1", "2")
-
+	// Test
+	r := NewMockFilterQueryIterator(stub, filteredKeys)
 	return r, nil
+}
+
+type MockStateQueryIterator struct {
+	Closed  bool
+	Data    *map[string][]byte
+	Current *list.Element
 }
 
 func NewMockStubExtend(stub *MockStub, c Chaincode) *MockStubExtend {
 	s := new(MockStubExtend)
 	s.MockStub = stub
 	s.cc = c
+	s.CouchDB = false
 	return s
+}
+
+func (stub *MockStubExtend) SetCouchDBConfiguration(handler *CouchDBHandler) {
+	stub.CouchDB = true
+	stub.DbHandler = handler
 }
 
 // Override this function from MockStub
@@ -92,4 +88,67 @@ func (stub *MockStubExtend) GetStringArgs() []string {
 		strargs = append(strargs, string(barg))
 	}
 	return strargs
+}
+
+// PutState writes the specified `value` and `key` into the ledger.
+func (stub *MockStubExtend) PutState(key string, value []byte) error {
+	// Carry on
+	stub.putStateOriginal(key, value)
+
+	// In case we are using CouchDB, we will also store the value document in the database
+	if stub.CouchDB {
+		stub.DbHandler.SaveDocument(key, value)
+	}
+
+	return nil
+}
+
+// This is copied from mockstub as we still need to carry on normal putstate operation with the mock ledger map
+func (stub *MockStubExtend) putStateOriginal(key string, value []byte) error {
+	if stub.TxID == "" {
+		err := errors.New("cannot PutState without a transactions - call stub.MockTransactionStart()?")
+		mockLogger.Errorf("%+v", err)
+		return err
+	}
+
+	// If the value is nil or empty, delete the key
+	if len(value) == 0 {
+		mockLogger.Debug("MockStub", stub.Name, "PutState called, but value is nil or empty. Delete ", key)
+		return stub.DelState(key)
+	}
+
+	mockLogger.Debug("MockStub", stub.Name, "Putting", key, value)
+	stub.State[key] = value
+
+	// insert key into ordered list of keys
+	for elem := stub.Keys.Front(); elem != nil; elem = elem.Next() {
+		elemValue := elem.Value.(string)
+		comp := strings.Compare(key, elemValue)
+		mockLogger.Debug("MockStub", stub.Name, "Compared", key, elemValue, " and got ", comp)
+		if comp < 0 {
+			// key < elem, insert it before elem
+			stub.Keys.InsertBefore(key, elem)
+			mockLogger.Debug("MockStub", stub.Name, "Key", key, " inserted before", elem.Value)
+			break
+		} else if comp == 0 {
+			// keys exists, no need to change
+			mockLogger.Debug("MockStub", stub.Name, "Key", key, "already in State")
+			break
+		} else { // comp > 0
+			// key > elem, keep looking unless this is the end of the list
+			if elem.Next() == nil {
+				stub.Keys.PushBack(key)
+				mockLogger.Debug("MockStub", stub.Name, "Key", key, "appended")
+				break
+			}
+		}
+	}
+
+	// special case for empty Keys list
+	if stub.Keys.Len() == 0 {
+		stub.Keys.PushFront(key)
+		mockLogger.Debug("MockStub", stub.Name, "Key", key, "is first element in list")
+	}
+
+	return nil
 }
