@@ -43,9 +43,13 @@ func TestAdmin(t *testing.T) {
 }
 
 func TestQuorum(t *testing.T) {
-	// Setup mockextend
+	// Setup mockextend - split this to util - TODO
 	cc := new(Chaincode)
 	stub := util.NewMockStubExtend(shim.NewMockStub("hstx", cc), cc)
+	db := util.NewCouchDBHandler("hstx-test")
+	stub.SetCouchDBConfiguration(db)
+
+	// Sample data
 	admin := "Admin1"
 	pubKey, _ := ioutil.ReadFile("./sample/pk.pem")
 	pk := base64.StdEncoding.EncodeToString(pubKey)
