@@ -80,7 +80,7 @@ func NewMockFilterQueryIterator(stub *MockStubExtend, keys *list.List) *mockFilt
 	iter.Closed = false
 	iter.Stub = stub
 	iter.FilteredKeys = keys
-	iter.Current = stub.Keys.Front()
+	iter.Current = iter.FilteredKeys.Front()
 
 	return iter
 }
