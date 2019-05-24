@@ -4,9 +4,9 @@ import (
 	"encoding/json"
 	"fmt"
 
-	"github.com/Akachain/akc-go-sdk/common"
+	. "github.com/Akachain/akc-go-sdk/common"
 	"github.com/Akachain/akc-go-sdk/hstx/models"
-	. "github.com/Akachain/akc-go-sdk/util"
+	"github.com/Akachain/akc-go-sdk/util"
 	"github.com/hyperledger/fabric/core/chaincode/shim"
 	pb "github.com/hyperledger/fabric/protos/peer"
 	"github.com/rs/xid"
@@ -18,25 +18,23 @@ type Commit models.Commit
 // ------------------- //
 //Create Commit
 func (commit *Commit) CreateCommit(stub shim.ChaincodeStubInterface, args []string) pb.Response {
-	if len(args) != 1 {
-		//Invalid arguments
-		resErr := common.ResponseError{common.ERR2, common.ResCodeDict[common.ERR2]}
-		return common.RespondError(resErr)
-	}
+	util.CheckChaincodeFunctionCallWellFormedness(args, 1)
 	ProposalID := args[0]
 	var admin *Admin
-	adminbytes, err := Get_all_data_(stub, models.ADMINTABLE)
-
 	admin = new(Admin)
 	Adminlist := []*Admin{}
-
+	adminbytes, err := util.Getalldata(stub, models.ADMINTABLE)
+	if err != nil {
+		resErr := ResponseError{ERR4, fmt.Sprintf("%s %s %s", ResCodeDict[ERR4], err.Error(), GetLine())}
+		return RespondError(resErr)
+	}
 	for row_json_bytes := range adminbytes {
 		admin = new(Admin)
 		err = json.Unmarshal(row_json_bytes, admin)
+		//convert JSON eror
 		if err != nil {
-
-			resErr := common.ResponseError{common.ERR6, common.ResCodeDict[common.ERR6]}
-			return common.RespondError(resErr)
+			resErr := ResponseError{ERR3, fmt.Sprintf("%s %s %s", ResCodeDict[ERR3], err.Error(), GetLine())}
+			return RespondError(resErr)
 		}
 		Adminlist = append(Adminlist, admin)
 	}
@@ -44,34 +42,64 @@ func (commit *Commit) CreateCommit(stub shim.ChaincodeStubInterface, args []stri
 	var quorumList = []Quorum{}
 	quorumResutl := new(Quorum)
 	commitResutl := new(Commit)
-	//queryStringQuorum := fmt.Sprintf("{\"selector\": {\"_id\": {\"$regex\": \"^Quorum_\"},\"ProposalID\": \"%s\"}}", ProposalID)
-
-	queryStringCommit := fmt.Sprintf("{\"selector\": {\"_id\": {\"$regex\": \"^Commit_\"},\"ProposalID\": \"%s\"}}", ProposalID)
-
-	resultsIterator, err := stub.GetQueryResult(queryStringCommit)
+	//check ProposalID exist in Quorum
+	queryStringQuorum := fmt.Sprintf("{\"selector\": {\"_id\": {\"$regex\": \"^Quorum_\"},\"ProposalID\": \"%s\"}}", ProposalID)
+	Logger.Debug("queryStringQuorum: %v", queryStringQuorum)
+	resultsIterator, err := stub.GetQueryResult(queryStringQuorum)
 	if err != nil {
-		resErr := common.ResponseError{common.ERR4, fmt.Sprintf("%s %s %s", common.ResCodeDict[common.ERR4], err.Error(), common.GetLine())}
-		return common.RespondError(resErr)
+		resErr := ResponseError{ERR4, fmt.Sprintf("%s %s %s", ResCodeDict[ERR4], err.Error(), GetLine())}
+		return RespondError(resErr)
 	}
 	defer resultsIterator.Close()
 
 	for resultsIterator.HasNext() {
 		queryResponse, err := resultsIterator.Next()
 		if err != nil {
-			resErr := common.ResponseError{common.ERR4, fmt.Sprintf("%s %s %s", common.ResCodeDict[common.ERR4], err.Error(), common.GetLine())}
-			return common.RespondError(resErr)
+			resErr := ResponseError{ERR4, fmt.Sprintf("%s %s %s", ResCodeDict[ERR4], err.Error(), GetLine())}
+			return RespondError(resErr)
 		}
-		_ = json.Unmarshal(queryResponse.Value, commitResutl)
-		_ = json.Unmarshal(queryResponse.Value, quorumResutl)
+		err = json.Unmarshal(queryResponse.Value, quorumResutl)
+		if err != nil {
+			//convert JSON eror
+			resErr := ResponseError{ERR3, fmt.Sprintf("%s %s %s", ResCodeDict[ERR3], err.Error(), GetLine())}
+			return RespondError(resErr)
+		}
 		quorumList = append(quorumList, *quorumResutl)
 	}
 	if quorumResutl.ProposalID == "" {
-		resErr := common.ResponseError{common.ERR12, fmt.Sprintf("%s %s %s", common.ResCodeDict[common.ERR12], "", common.GetLine())}
-		return common.RespondError(resErr)
+		resErr := ResponseError{ERR12, fmt.Sprintf("%s %s %s", ResCodeDict[ERR12], "", GetLine())}
+		return RespondError(resErr)
 	}
+
+	//check Only Commit once
+	queryStringCommit := fmt.Sprintf("{\"selector\": {\"_id\": {\"$regex\": \"^Commit_\"},\"ProposalID\": \"%s\"}}", ProposalID)
+	Logger.Debug("queryStringCommit: %v", queryStringCommit)
+
+	resultsIterator, err = stub.GetQueryResult(queryStringCommit)
+	if err != nil {
+		resErr := ResponseError{ERR4, fmt.Sprintf("%s %s %s", ResCodeDict[ERR4], err.Error(), GetLine())}
+		return RespondError(resErr)
+	}
+	defer resultsIterator.Close()
+
+	for resultsIterator.HasNext() {
+		queryResponse, err := resultsIterator.Next()
+		if err != nil {
+			resErr := ResponseError{ERR4, fmt.Sprintf("%s %s %s", ResCodeDict[ERR4], err.Error(), GetLine())}
+			return RespondError(resErr)
+		}
+		err = json.Unmarshal(queryResponse.Value, commitResutl)
+		if err != nil {
+			//convert JSON eror
+			resErr := ResponseError{ERR3, fmt.Sprintf("%s %s %s", ResCodeDict[ERR3], err.Error(), GetLine())}
+			return RespondError(resErr)
+		}
+		quorumList = append(quorumList, *quorumResutl)
+	}
+
 	if commitResutl.CommitID != "" && commitResutl.Status == "Verify" {
-		resErr := common.ResponseError{common.ERR11, fmt.Sprintf("%s %s %s", common.ResCodeDict[common.ERR11], "", common.GetLine())}
-		return common.RespondError(resErr)
+		resErr := ResponseError{ERR11, fmt.Sprintf("%s %s %s", ResCodeDict[ERR11], "", GetLine())}
+		return RespondError(resErr)
 	}
 
 	count := 0
@@ -79,49 +107,43 @@ func (commit *Commit) CreateCommit(stub shim.ChaincodeStubInterface, args []stri
 	for _, quorum := range quorumList {
 		if quorum.Status == "Verify" {
 			for _, admin := range Adminlist {
-				if quorum.AdminID == admin.AdminID {
+				if quorum.AdminID == admin.AdminID && admin.Status == "Active" {
 					count = count + 1
 					quorumIDList = append(quorumIDList, quorum.QuorumID)
 				}
 			}
 		}
 	}
-	fmt.Printf("count:%v \n", count)
-	fmt.Printf("quorumIDList:%v \n", quorumIDList)
-	fmt.Printf("adminList:%v \n", Adminlist)
 
-	if count < 3 {
-		fmt.Printf("Not Enough quorum \n")
-		resErr := common.ResponseError{common.ERR10, fmt.Sprintf("%s %s %s", common.ResCodeDict[common.ERR10], "[]", common.GetLine())}
-		return common.RespondError(resErr)
+	if count < 3 || len(quorumIDList) < 3 {
+		Logger.Info("Not Enough quorum: %v", count)
+		resErr := ResponseError{ERR10, fmt.Sprintf("%s %s %s", ResCodeDict[ERR10], "[]", GetLine())}
+		return RespondError(resErr)
 	}
 	CommitID := xid.New().String()
-	fmt.Printf("CommitID %v\n", CommitID)
+	Logger.Info("CommitID Return: %v", CommitID)
 
-	err1 := Create_data_(stub, models.COMMITTABLE, []string{CommitID}, &Commit{CommitID: string(CommitID), ProposalID: ProposalID, QuorumID: quorumIDList, Status: "Verify"})
-	if err1 != nil {
-		resErr := common.ResponseError{common.ERR6, fmt.Sprintf("%s %s %s", common.ResCodeDict[common.ERR6], err1.Error(), common.GetLine())}
-		return common.RespondError(resErr)
+	err = util.Createdata(stub, models.COMMITTABLE, []string{CommitID}, &Commit{CommitID: string(CommitID), ProposalID: ProposalID, QuorumID: quorumIDList, Status: "Verify"})
+	if err != nil {
+		resErr := ResponseError{ERR5, fmt.Sprintf("%s %s %s", ResCodeDict[ERR5], err.Error(), GetLine())}
+		return RespondError(resErr)
 	}
-	resSuc := common.ResponseSuccess{common.SUCCESS, common.ResCodeDict[common.SUCCESS], CommitID}
-	return common.RespondSuccess(resSuc)
+	resSuc := ResponseSuccess{SUCCESS, ResCodeDict[SUCCESS], CommitID}
+	return RespondSuccess(resSuc)
 }
 
 // GetCommitByID
 func (commit *Commit) GetCommitByID(stub shim.ChaincodeStubInterface, args []string) pb.Response {
-	if len(args) != 1 {
-		//Invalid arguments
-		resErr := common.ResponseError{common.ERR2, common.ResCodeDict[common.ERR2]}
-		return common.RespondError(resErr)
-	}
+	util.CheckChaincodeFunctionCallWellFormedness(args, 1)
+
 	DataID := args[0]
-	res := GetDataByID(stub, DataID, commit, models.COMMITTABLE)
+	res := util.GetDataByID(stub, DataID, commit, models.COMMITTABLE)
 	return res
 }
 
 // GetAllCommit
 func (commit *Commit) GetAllCommit(stub shim.ChaincodeStubInterface) pb.Response {
-	res := GetAllData(stub, commit, models.COMMITTABLE)
+	res := util.GetAllData(stub, commit, models.COMMITTABLE)
 	return res
 }
 

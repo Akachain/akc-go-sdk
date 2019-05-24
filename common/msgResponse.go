@@ -27,6 +27,9 @@ const (
 	ERR10   = "AKC0010"
 	ERR11   = "AKC0011"
 	ERR12   = "AKC0012"
+	ERR13   = "AKC0013"
+	ERR14   = "AKC0014"
+	ERR15   = "AKC0015"
 )
 
 var ResCodeDict = map[string]string{
@@ -43,6 +46,9 @@ var ResCodeDict = map[string]string{
 	"AKC0010": "Not Enough Quorum",
 	"AKC0011": "Only Commit once!",
 	"AKC0012": "Proposal Commit not exist!",
+	"AKC0013": "Proposal ID not exist!",
+	"AKC0014": "Admin ID not exist!",
+	"AKC0015": "Admin ID not Active!",
 }
 
 type InvokeResponse struct {

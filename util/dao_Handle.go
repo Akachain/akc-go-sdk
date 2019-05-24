@@ -15,13 +15,13 @@ import (
 // ------------------- //
 
 // Update  Infomation
-func Change_info_(stub shim.ChaincodeStubInterface, TableModel string, row_key []string, data interface{}) error {
+func Changeinfo(stub shim.ChaincodeStubInterface, TableModel string, row_key []string, data interface{}) error {
 	_, err := InsertTableRow(stub, TableModel, row_key, data, FAIL_UNLESS_OVERWRITE, nil)
 	return err
 }
 
 //create data
-func Create_data_(stub shim.ChaincodeStubInterface, TableModel string, row_key []string, data interface{}) error {
+func Createdata(stub shim.ChaincodeStubInterface, TableModel string, row_key []string, data interface{}) error {
 	var old_data interface{}
 	row_was_found, err := InsertTableRow(stub, TableModel, row_key, data, FAIL_BEFORE_OVERWRITE, &old_data)
 	if err != nil {
@@ -34,7 +34,7 @@ func Create_data_(stub shim.ChaincodeStubInterface, TableModel string, row_key [
 }
 
 //get information of data  by ID
-func Get_data_byid_(stub shim.ChaincodeStubInterface, ID string, MODELTABLE string) (interface{}, error) {
+func Getdatabyid(stub shim.ChaincodeStubInterface, ID string, MODELTABLE string) (interface{}, error) {
 	var datastruct interface{}
 
 	row_was_found, err := GetTableRow(stub, MODELTABLE, []string{ID}, &datastruct, FAIL_IF_MISSING)
@@ -49,7 +49,7 @@ func Get_data_byid_(stub shim.ChaincodeStubInterface, ID string, MODELTABLE stri
 }
 
 //get all data
-func Get_all_data_(stub shim.ChaincodeStubInterface, MODELTABLE string) (chan []byte, error) {
+func Getalldata(stub shim.ChaincodeStubInterface, MODELTABLE string) (chan []byte, error) {
 	row_json_bytes, err := GetTableRows(stub, MODELTABLE, []string{})
 	if err != nil {
 		return nil, fmt.Errorf("Could not get %v", err.Error())
@@ -60,7 +60,7 @@ func Get_all_data_(stub shim.ChaincodeStubInterface, MODELTABLE string) (chan []
 // GetDataByID
 func GetDataByID(stub shim.ChaincodeStubInterface, DataID string, data interface{}, ModelTable string) pb.Response {
 
-	rs, err := Get_data_byid_(stub, DataID, ModelTable)
+	rs, err := Getdatabyid(stub, DataID, ModelTable)
 
 	mapstructure.Decode(rs, data)
 	fmt.Printf("data: %v\n", data)
@@ -81,7 +81,7 @@ func GetAllData(stub shim.ChaincodeStubInterface, data interface{}, ModelTable s
 
 	var Datalist []interface{}
 
-	datalbytes, err := Get_all_data_(stub, ModelTable)
+	datalbytes, err := Getalldata(stub, ModelTable)
 	for row_json_bytes := range datalbytes {
 		err = json.Unmarshal(row_json_bytes, data)
 		if err != nil {

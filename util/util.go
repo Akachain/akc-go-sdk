@@ -245,7 +245,7 @@ func MockInvokeTransaction(t *testing.T, stub *MockStubExtend, args [][]byte) st
 	txId := genTxID()
 	res := stub.MockInvoke(txId, args)
 	if res.Status != shim.OK {
-		return string(res.Payload)
+		return string(res.Message)
 	}
 	return string(res.Payload)
 }
@@ -256,7 +256,7 @@ func MockQueryTransaction(t *testing.T, stub *MockStubExtend, args [][]byte) str
 	res := stub.MockInvoke(txId, args)
 	if res.Status != shim.OK {
 		t.FailNow()
-		return string(res.Payload)
+		return string(res.Message)
 	}
 	t.FailNow()
 	return string(res.Payload)

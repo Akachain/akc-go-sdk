@@ -3,12 +3,11 @@ package controllers
 import (
 	"fmt"
 
-	"github.com/Akachain/akc-go-sdk/common"
+	. "github.com/Akachain/akc-go-sdk/common"
 	"github.com/Akachain/akc-go-sdk/hstx/models"
-	. "github.com/Akachain/akc-go-sdk/util"
+	"github.com/Akachain/akc-go-sdk/util"
 	"github.com/hyperledger/fabric/core/chaincode/shim"
 	pb "github.com/hyperledger/fabric/protos/peer"
-	"github.com/rs/xid"
 )
 
 type Proposal models.Proposal
@@ -18,40 +17,28 @@ type Proposal models.Proposal
 
 //Create Proposal
 func (proposal *Proposal) CreateProposal(stub shim.ChaincodeStubInterface, args []string) pb.Response {
-	if len(args) != 1 {
-		//Invalid arguments
-		resErr := common.ResponseError{common.ERR2, common.ResCodeDict[common.ERR2]}
-		return common.RespondError(resErr)
-	}
-	ProposalID := xid.New().String()
-	fmt.Printf("ProposalID %s\n", ProposalID)
-
-	err := Create_data_(stub, models.PROPOSALTABLE, []string{ProposalID}, &Proposal{ProposalID: ProposalID, Data: args[0]})
-
+	util.CheckChaincodeFunctionCallWellFormedness(args, 1)
+	ProposalID := stub.GetTxID()
+	err := util.Createdata(stub, models.PROPOSALTABLE, []string{ProposalID}, &Proposal{ProposalID: ProposalID, Data: args[0]})
 	if err != nil {
-		resErr := common.ResponseError{common.ERR5, fmt.Sprintf("%s %s %s", common.ResCodeDict[common.ERR5], err.Error(), common.GetLine())}
-		return common.RespondError(resErr)
+		resErr := ResponseError{ERR5, fmt.Sprintf("%s %s %s", ResCodeDict[ERR5], err.Error(), GetLine())}
+		return RespondError(resErr)
 	}
-
-	resSuc := common.ResponseSuccess{common.SUCCESS, common.ResCodeDict[common.SUCCESS], ProposalID}
-	return common.RespondSuccess(resSuc)
+	resSuc := ResponseSuccess{SUCCESS, ResCodeDict[SUCCESS], ProposalID}
+	return RespondSuccess(resSuc)
 }
 
 // GetProposalByID
 func (proposal *Proposal) GetProposalByID(stub shim.ChaincodeStubInterface, args []string) pb.Response {
-	if len(args) != 1 {
-		//Invalid arguments
-		resErr := common.ResponseError{common.ERR2, common.ResCodeDict[common.ERR2]}
-		return common.RespondError(resErr)
-	}
+	util.CheckChaincodeFunctionCallWellFormedness(args, 1)
 	DataID := args[0]
-	res := GetDataByID(stub, DataID, proposal, models.PROPOSALTABLE)
+	res := util.GetDataByID(stub, DataID, proposal, models.PROPOSALTABLE)
 	return res
 }
 
 // GetAllProposal
 func (proposal *Proposal) GetAllProposal(stub shim.ChaincodeStubInterface) pb.Response {
-	res := GetAllData(stub, proposal, models.PROPOSALTABLE)
+	res := util.GetAllData(stub, proposal, models.PROPOSALTABLE)
 	return res
 }
 
