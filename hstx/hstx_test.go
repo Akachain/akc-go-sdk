@@ -47,6 +47,8 @@ func TestProposal(t *testing.T) {
 	// Setup mockextend
 	cc := new(Chaincode)
 	stub := util.NewMockStubExtend(shim.NewMockStub("hstx", cc), cc)
+	db := util.NewCouchDBHandler("hstx-test")
+	stub.SetCouchDBConfiguration(db)
 	pr_data := "Update Money"
 
 	// Create a new Proposal - automatically fail if not succeess
@@ -70,6 +72,8 @@ func TestQuorum(t *testing.T) {
 	// Setup mockextend
 	cc := new(Chaincode)
 	stub := util.NewMockStubExtend(shim.NewMockStub("hstx", cc), cc)
+	db := util.NewCouchDBHandler("hstx-test")
+	stub.SetCouchDBConfiguration(db)
 	pr_in := "Update Money1"
 	adminName := "Admin1"
 	pubKey, _ := ioutil.ReadFile("./sample/pk.pem")
@@ -111,8 +115,17 @@ func TestQuorum(t *testing.T) {
 	var qr models.Quorum
 	json.Unmarshal([]byte(state3), &qr)
 
-	fmt.Println("Invoke Quorum ID ", qr.QuorumID)
-	fmt.Println("Invoke Quorum ", r3)
+	rs4 := util.MockInvokeTransaction(t, stub, [][]byte{[]byte("CreateQuorum"), signature, []byte(ad.AdminID), []byte(pr.ProposalID)})
+	var r4 InvokeResponse
+	json.Unmarshal([]byte(rs4), &r4)
+
+	compositeKey4, _ := stub.CreateCompositeKey(models.QUORUMTABLE, []string{r4.Rows})
+	state4, _ := stub.GetState(compositeKey4)
+	var qr2 models.Quorum
+	json.Unmarshal([]byte(state4), &qr2)
+
+	fmt.Println("Invoke Quorum ID ", qr2.QuorumID)
+	fmt.Println("Invoke Quorum ", r4)
 
 	// Check if the created admin information is correct
 	assert.Equal(t, pr_in, pr.Data)
@@ -281,7 +294,7 @@ func TestCommit(t *testing.T) {
 	assert.Equal(t, pr_in, pr.Data)
 }
 
-func TestQuorum(t *testing.T) {
+func TestQuorumLong(t *testing.T) {
 	// Setup mockextend - split this to util - TODO
 	cc := new(Chaincode)
 	stub := util.NewMockStubExtend(shim.NewMockStub("hstx", cc), cc)

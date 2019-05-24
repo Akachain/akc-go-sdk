@@ -12,10 +12,6 @@ import (
 	. "github.com/Akachain/akc-go-sdk/common"
 	"github.com/Akachain/akc-go-sdk/hstx/models"
 	"github.com/Akachain/akc-go-sdk/util"
-<<<<<<< HEAD
-=======
-	. "github.com/Akachain/akc-go-sdk/util"
->>>>>>> 854f37700df16408987d09e1f9fcda175cc85446
 	"github.com/hyperledger/fabric/core/chaincode/shim"
 	pb "github.com/hyperledger/fabric/protos/peer"
 	"github.com/mitchellh/mapstructure"
@@ -28,10 +24,6 @@ type Quorum models.Quorum
 
 func (quorum *Quorum) CreateQuorum(stub shim.ChaincodeStubInterface, args []string) pb.Response {
 	util.CheckChaincodeFunctionCallWellFormedness(args, 3)
-<<<<<<< HEAD
-
-=======
->>>>>>> 854f37700df16408987d09e1f9fcda175cc85446
 	Signature := args[0]
 	AdminID := args[1]
 	ProposalID := args[2]
@@ -54,7 +46,8 @@ func (quorum *Quorum) CreateQuorum(stub shim.ChaincodeStubInterface, args []stri
 	// An admin can only create one signed quorum for any given proposal
 	quorumResult := new(Quorum)
 	//Select ProposalID from Model Quorum to check exist
-	queryString := fmt.Sprintf("{\"selector\": {\"_id\": {\"$regex\": \"^Quorum_\"},\"ProposalID\": \"%s\"}}", ProposalID)
+	queryString := fmt.Sprintf("{\"selector\": {\"_id\": {\"$regex\": \"\u0000Quorum_\"},\"ProposalID\": \"%s\"}", ProposalID)
+	//queryString := "{\"selector\": {\"_id\": {\"$regex\": \"Quorum_\"},\"ProposalID\": \"" + ProposalID + "\"}"
 	resultsIterator, err := stub.GetQueryResult(queryString)
 	if err != nil {
 		resErr := ResponseError{ERR4, fmt.Sprintf("%s %s %s", ResCodeDict[ERR4], err.Error(), GetLine())}

@@ -3,7 +3,7 @@ package util
 import (
 	"encoding/json"
 
-	"github.com/leesper/couchdb-golang"
+	couchdb "github.com/leesper/couchdb-golang"
 )
 
 const (
