@@ -17,8 +17,9 @@ type Commit models.Commit
 // ------------------- //
 //Create Commit
 func (commit *Commit) CreateCommit(stub shim.ChaincodeStubInterface, args []string) pb.Response {
-	util.CheckChaincodeFunctionCallWellFormedness(args, 1)
-	ProposalID := args[0]
+	util.CheckChaincodeFunctionCallWellFormedness(args, 2)
+	AdminID := args[0]
+	ProposalID := args[1]
 	var admin *Admin
 	admin = new(Admin)
 	Adminlist := []*Admin{}
@@ -116,14 +117,14 @@ func (commit *Commit) CreateCommit(stub shim.ChaincodeStubInterface, args []stri
 	}
 
 	if count < 3 || len(quorumIDList) < 3 {
-		Logger.Info("Not Enough quorum: %v", count)
+		Logger.Debug("Not Enough quorum: %v", count)
 		resErr := ResponseError{ERR10, fmt.Sprintf("%s %s %s", ResCodeDict[ERR10], "[]", GetLine())}
 		return RespondError(resErr)
 	}
 	CommitID := stub.GetTxID()
-	Logger.Info("CommitID Return: %v", CommitID)
+	Logger.Debug("CommitID Return: %v", CommitID)
 
-	err = util.Createdata(stub, models.COMMITTABLE, []string{CommitID}, &Commit{CommitID: string(CommitID), ProposalID: ProposalID, QuorumID: quorumIDList, Status: "Verify"})
+	err = util.Createdata(stub, models.COMMITTABLE, []string{CommitID}, &Commit{CommitID: string(CommitID), AdminID: AdminID, ProposalID: ProposalID, QuorumList: quorumIDList, Status: "Verify"})
 	if err != nil {
 		resErr := ResponseError{ERR5, fmt.Sprintf("%s %s %s", ResCodeDict[ERR5], err.Error(), GetLine())}
 		return RespondError(resErr)

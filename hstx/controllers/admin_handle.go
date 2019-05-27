@@ -16,7 +16,7 @@ type Admin models.Admin
 //CreateAdmin adds an admin document that contain the AdminID and his Public Key
 func (admin *Admin) CreateAdmin(stub shim.ChaincodeStubInterface, args []string) pb.Response {
 	util.CheckChaincodeFunctionCallWellFormedness(args, 2)
-	AdminID := stub.GetTxID()
+	AdminID := fmt.Sprintf("%s_%s", stub.GetTxID(), args[0])
 	Name := args[0]
 	Publickey := args[1]
 	Status := "Active"

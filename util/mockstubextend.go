@@ -70,6 +70,15 @@ func (stub *MockStubExtend) MockInvoke(uuid string, args [][]byte) pb.Response {
 }
 
 // Override this function from MockStub
+func (stub *MockStubExtend) MockInit(uuid string, args [][]byte) pb.Response {
+	stub.args = args
+	stub.MockTransactionStart(uuid)
+	res := stub.cc.Init(stub)
+	stub.MockTransactionEnd(uuid)
+	return res
+}
+
+// Override this function from MockStub
 func (stub *MockStubExtend) GetFunctionAndParameters() (function string, params []string) {
 	allargs := stub.GetStringArgs()
 	function = ""

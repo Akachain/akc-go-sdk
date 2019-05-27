@@ -19,6 +19,7 @@ type Chaincode struct {
  * The Init method is called when the Chain code" is instantiated by the blockchain network
  */
 func (s *Chaincode) Init(stub shim.ChaincodeStubInterface) pb.Response {
+	// The invokeFunction returns
 	Admin1 := "Admin1"
 	pubKey1, _ := ioutil.ReadFile("./sample/pk1.pem")
 	pk1 := base64.StdEncoding.EncodeToString(pubKey1)
@@ -31,12 +32,13 @@ func (s *Chaincode) Init(stub shim.ChaincodeStubInterface) pb.Response {
 	pubKey3, _ := ioutil.ReadFile("./sample/pk3.pem")
 	pk3 := base64.StdEncoding.EncodeToString(pubKey3)
 
-	controller_admin.CreateAdmin(stub, []string{Admin1, pk1})
+	rs1 := controller_admin.CreateAdmin(stub, []string{Admin1, pk1})
+	rs2 := controller_admin.CreateAdmin(stub, []string{Admin2, pk2})
+	rs3 := controller_admin.CreateAdmin(stub, []string{Admin3, pk3})
 
-	controller_admin.CreateAdmin(stub, []string{Admin2, pk2})
-
-	controller_admin.CreateAdmin(stub, []string{Admin3, pk3})
-
+	if rs1.Status != shim.OK || rs2.Status != shim.OK || rs3.Status != shim.OK {
+		return shim.Error("Init chaincode with 3 admin fail")
+	}
 	return shim.Success(nil)
 }
 

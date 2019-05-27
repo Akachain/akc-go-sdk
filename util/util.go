@@ -262,6 +262,16 @@ func MockQueryTransaction(t *testing.T, stub *MockStubExtend, args [][]byte) str
 	return string(res.Payload)
 }
 
+// MockIInit creates a mock invoke transaction using MockStubExtend
+func MockInitTransaction(t *testing.T, stub *MockStubExtend, args [][]byte) string {
+	txId := genTxID()
+	res := stub.MockInit(txId, args)
+	if res.Status != shim.OK {
+		return string(res.Message)
+	}
+	return string(res.Payload)
+}
+
 // Generate random transaction ID
 func genTxID() string {
 	uid := uuid.Must(uuid.NewV4())
