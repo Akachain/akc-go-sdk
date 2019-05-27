@@ -43,7 +43,8 @@ func (commit *Commit) CreateCommit(stub shim.ChaincodeStubInterface, args []stri
 	quorumResutl := new(Quorum)
 	commitResutl := new(Commit)
 	//check ProposalID exist in Quorum
-	queryStringQuorum := fmt.Sprintf("{\"selector\": {\"_id\": {\"$regex\": \"^Quorum_\"},\"ProposalID\": \"%s\"}}", ProposalID)
+	queryStringQuorum := fmt.Sprintf("{\"selector\": {\"_id\": {\"$regex\": \"Quorum_\"},\"ProposalID\": \"%s\"}}", ProposalID)
+
 	Logger.Debug("queryStringQuorum: %v", queryStringQuorum)
 	resultsIterator, err := stub.GetQueryResult(queryStringQuorum)
 	if err != nil {
@@ -72,7 +73,7 @@ func (commit *Commit) CreateCommit(stub shim.ChaincodeStubInterface, args []stri
 	}
 
 	//check Only Commit once
-	queryStringCommit := fmt.Sprintf("{\"selector\": {\"_id\": {\"$regex\": \"^Commit_\"},\"ProposalID\": \"%s\"}}", ProposalID)
+	queryStringCommit := fmt.Sprintf("{\"selector\": {\"_id\": {\"$regex\": \"Commit_\"},\"ProposalID\": \"%s\"}}", ProposalID)
 	Logger.Debug("queryStringCommit: %v", queryStringCommit)
 
 	resultsIterator, err = stub.GetQueryResult(queryStringCommit)

@@ -1,7 +1,9 @@
 package main
 
 import (
+	"encoding/base64"
 	"fmt"
+	"io/ioutil"
 
 	. "github.com/Akachain/akc-go-sdk/common"
 	ctl "github.com/Akachain/akc-go-sdk/hstx/controllers"
@@ -17,6 +19,24 @@ type Chaincode struct {
  * The Init method is called when the Chain code" is instantiated by the blockchain network
  */
 func (s *Chaincode) Init(stub shim.ChaincodeStubInterface) pb.Response {
+	Admin1 := "Admin1"
+	pubKey1, _ := ioutil.ReadFile("./sample/pk1.pem")
+	pk1 := base64.StdEncoding.EncodeToString(pubKey1)
+
+	Admin2 := "Admin2"
+	pubKey2, _ := ioutil.ReadFile("./sample/pk2.pem")
+	pk2 := base64.StdEncoding.EncodeToString(pubKey2)
+
+	Admin3 := "Admin3"
+	pubKey3, _ := ioutil.ReadFile("./sample/pk3.pem")
+	pk3 := base64.StdEncoding.EncodeToString(pubKey3)
+
+	controller_admin.CreateAdmin(stub, []string{Admin1, pk1})
+
+	controller_admin.CreateAdmin(stub, []string{Admin2, pk2})
+
+	controller_admin.CreateAdmin(stub, []string{Admin3, pk3})
+
 	return shim.Success(nil)
 }
 

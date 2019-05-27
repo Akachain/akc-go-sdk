@@ -7,7 +7,7 @@ import (
 
 	. "github.com/hyperledger/fabric/core/chaincode/shim"
 	pb "github.com/hyperledger/fabric/protos/peer"
-	"github.com/op/go-logging"
+	logging "github.com/op/go-logging"
 )
 
 // Logger for the shim package.
