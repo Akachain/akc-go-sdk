@@ -1,3 +1,14 @@
+/**
+This package is built based on high throughput chaincode sample: https://github.com/hyperledger/fabric-samples/blob/release/high-throughput/chaincode/high-throughput.go
+We have modified to be used as a shared package for chaincode golang in fabric.
+New feature add to package:
+	- Add key to correct identifier for variable name. Key is optional.
+	- Changed operator to text.
+	- Returns JSON data instead of text when Get, Prune by variables name.
+	- Add optional for Prune.
+	- Returns all data of variable name if not added Key when Get or Prune.
+*/
+
 package akchtc
 
 import (
