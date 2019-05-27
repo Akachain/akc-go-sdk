@@ -9,7 +9,6 @@ import (
 	"github.com/Akachain/akc-go-sdk/util"
 	"github.com/hyperledger/fabric/core/chaincode/shim"
 	pb "github.com/hyperledger/fabric/protos/peer"
-	"github.com/rs/xid"
 )
 
 type Commit models.Commit
@@ -121,7 +120,7 @@ func (commit *Commit) CreateCommit(stub shim.ChaincodeStubInterface, args []stri
 		resErr := ResponseError{ERR10, fmt.Sprintf("%s %s %s", ResCodeDict[ERR10], "[]", GetLine())}
 		return RespondError(resErr)
 	}
-	CommitID := xid.New().String()
+	CommitID := stub.GetTxID()
 	Logger.Info("CommitID Return: %v", CommitID)
 
 	err = util.Createdata(stub, models.COMMITTABLE, []string{CommitID}, &Commit{CommitID: string(CommitID), ProposalID: ProposalID, QuorumID: quorumIDList, Status: "Verify"})
