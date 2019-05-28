@@ -15,6 +15,11 @@ import (
 type Chaincode struct {
 }
 
+var controller_admin ctl.Admin
+var controller_proposal ctl.Proposal
+var controller_quorum ctl.Quorum
+var controller_commit ctl.Commit
+
 /*
  * The Init method is called when the Chain code" is instantiated by the blockchain network
  */
@@ -41,11 +46,6 @@ func (s *Chaincode) Init(stub shim.ChaincodeStubInterface) pb.Response {
 	}
 	return shim.Success(nil)
 }
-
-var controller_admin ctl.Admin
-var controller_proposal ctl.Proposal
-var controller_quorum ctl.Quorum
-var controller_commit ctl.Commit
 
 /*
  * The Invoke method is called as a result of an application request to run the chain code
