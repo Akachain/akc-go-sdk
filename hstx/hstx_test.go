@@ -313,7 +313,9 @@ func TestCommit_Err(t *testing.T) {
 	pubKey1, _ := ioutil.ReadFile("./sample/pk1.pem")
 	pubKey2, _ := ioutil.ReadFile("./sample/pk2.pem")
 	pubKey3, _ := ioutil.ReadFile("./sample/pk3.pem")
-	signature, _ := ioutil.ReadFile("./sample/signature1.txt")
+	signature1, _ := ioutil.ReadFile("./sample/signature1.txt")
+	signature2, _ := ioutil.ReadFile("./sample/signature2.txt")
+	signature3, _ := ioutil.ReadFile("./sample/signature3.txt")
 
 	// Create a new Admin - automatically fail if not succeess
 	rs1 := util.MockInvokeTransaction(t, stub, [][]byte{[]byte("CreateAdmin"), []byte("Admin1"), []byte(pubKey1)})
@@ -365,8 +367,8 @@ func TestCommit_Err(t *testing.T) {
 	//Proposal Commit not exist
 	assert.Equal(t, "AKC0012", commitRp2.Status)
 
-	util.MockInvokeTransaction(t, stub, [][]byte{[]byte("CreateQuorum"), signature, []byte(ad1.AdminID), []byte(pr.ProposalID)})
-	util.MockInvokeTransaction(t, stub, [][]byte{[]byte("CreateQuorum"), signature, []byte(ad2.AdminID), []byte(pr.ProposalID)})
+	util.MockInvokeTransaction(t, stub, [][]byte{[]byte("CreateQuorum"), signature1, []byte(ad1.AdminID), []byte(pr.ProposalID)})
+	util.MockInvokeTransaction(t, stub, [][]byte{[]byte("CreateQuorum"), signature2, []byte(ad2.AdminID), []byte(pr.ProposalID)})
 
 	commitRs := util.MockInvokeTransaction(t, stub, [][]byte{[]byte("CreateCommit"), []byte(ad1.AdminID), []byte(pr.ProposalID)})
 	var commitRp InvokeResponse
@@ -374,7 +376,7 @@ func TestCommit_Err(t *testing.T) {
 	//Not Enough Quorum
 	assert.Equal(t, "AKC0010", commitRp.Status)
 
-	util.MockInvokeTransaction(t, stub, [][]byte{[]byte("CreateQuorum"), signature, []byte(ad3.AdminID), []byte(pr.ProposalID)})
+	util.MockInvokeTransaction(t, stub, [][]byte{[]byte("CreateQuorum"), signature3, []byte(ad3.AdminID), []byte(pr.ProposalID)})
 
 	util.MockInvokeTransaction(t, stub, [][]byte{[]byte("CreateCommit"), []byte(ad1.AdminID), []byte(pr.ProposalID)})
 	commitRs1 := util.MockInvokeTransaction(t, stub, [][]byte{[]byte("CreateCommit"), []byte(ad1.AdminID), []byte(pr.ProposalID)})
