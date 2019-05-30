@@ -247,6 +247,7 @@ func MockInvokeTransaction(t *testing.T, stub *MockStubExtend, args [][]byte) st
 	if res.Status != shim.OK {
 		return string(res.Message)
 	}
+	// fmt.Println(res.Payload)
 	return string(res.Payload)
 }
 
@@ -258,7 +259,6 @@ func MockQueryTransaction(t *testing.T, stub *MockStubExtend, args [][]byte) str
 		t.FailNow()
 		return string(res.Message)
 	}
-	t.FailNow()
 	return string(res.Payload)
 }
 
