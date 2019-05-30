@@ -23,17 +23,11 @@ func (iter *mockFilterQueryIterator) HasNext() bool {
 	}
 
 	if iter.Current == nil {
-		mockLogger.Error("HasNext() couldn't get Current")
+		mockLogger.Debug("HasNext() couldn't get Current")
 		return false
 	}
 
-	current := iter.Current
-
-	if current.Next() != nil {
-		return true
-	}
-
-	return false
+	return true
 }
 
 // Next returns the next key and value in the range query iterator.
