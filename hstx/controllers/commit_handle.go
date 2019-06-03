@@ -9,7 +9,6 @@ import (
 	"github.com/Akachain/akc-go-sdk/util"
 	"github.com/hyperledger/fabric/core/chaincode/shim"
 	pb "github.com/hyperledger/fabric/protos/peer"
-	"github.com/rs/xid"
 )
 
 type Commit models.Commit
@@ -18,8 +17,9 @@ type Commit models.Commit
 // ------------------- //
 //Create Commit
 func (commit *Commit) CreateCommit(stub shim.ChaincodeStubInterface, args []string) pb.Response {
-	util.CheckChaincodeFunctionCallWellFormedness(args, 1)
-	ProposalID := args[0]
+	util.CheckChaincodeFunctionCallWellFormedness(args, 2)
+	AdminID := args[0]
+	ProposalID := args[1]
 	var admin *Admin
 	admin = new(Admin)
 	Adminlist := []*Admin{}
@@ -43,7 +43,8 @@ func (commit *Commit) CreateCommit(stub shim.ChaincodeStubInterface, args []stri
 	quorumResutl := new(Quorum)
 	commitResutl := new(Commit)
 	//check ProposalID exist in Quorum
-	queryStringQuorum := fmt.Sprintf("{\"selector\": {\"_id\": {\"$regex\": \"^Quorum_\"},\"ProposalID\": \"%s\"}}", ProposalID)
+	queryStringQuorum := fmt.Sprintf("{\"selector\": {\"_id\": {\"$regex\": \"Quorum_\"},\"ProposalID\": \"%s\"}}", ProposalID)
+
 	Logger.Debug("queryStringQuorum: %v", queryStringQuorum)
 	resultsIterator, err := stub.GetQueryResult(queryStringQuorum)
 	if err != nil {
@@ -72,7 +73,7 @@ func (commit *Commit) CreateCommit(stub shim.ChaincodeStubInterface, args []stri
 	}
 
 	//check Only Commit once
-	queryStringCommit := fmt.Sprintf("{\"selector\": {\"_id\": {\"$regex\": \"^Commit_\"},\"ProposalID\": \"%s\"}}", ProposalID)
+	queryStringCommit := fmt.Sprintf("{\"selector\": {\"_id\": {\"$regex\": \"Commit_\"},\"ProposalID\": \"%s\"}}", ProposalID)
 	Logger.Debug("queryStringCommit: %v", queryStringCommit)
 
 	resultsIterator, err = stub.GetQueryResult(queryStringCommit)
@@ -116,14 +117,14 @@ func (commit *Commit) CreateCommit(stub shim.ChaincodeStubInterface, args []stri
 	}
 
 	if count < 3 || len(quorumIDList) < 3 {
-		Logger.Info("Not Enough quorum: %v", count)
+		Logger.Debug("Not Enough quorum: %v", count)
 		resErr := ResponseError{ERR10, fmt.Sprintf("%s %s %s", ResCodeDict[ERR10], "[]", GetLine())}
 		return RespondError(resErr)
 	}
-	CommitID := xid.New().String()
-	Logger.Info("CommitID Return: %v", CommitID)
+	CommitID := stub.GetTxID()
+	Logger.Debug("CommitID Return: %v", CommitID)
 
-	err = util.Createdata(stub, models.COMMITTABLE, []string{CommitID}, &Commit{CommitID: string(CommitID), ProposalID: ProposalID, QuorumID: quorumIDList, Status: "Verify"})
+	err = util.Createdata(stub, models.COMMITTABLE, []string{CommitID}, &Commit{CommitID: string(CommitID), AdminID: AdminID, ProposalID: ProposalID, QuorumList: quorumIDList, Status: "Verify"})
 	if err != nil {
 		resErr := ResponseError{ERR5, fmt.Sprintf("%s %s %s", ResCodeDict[ERR5], err.Error(), GetLine())}
 		return RespondError(resErr)

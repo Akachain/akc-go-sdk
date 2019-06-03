@@ -44,10 +44,10 @@ func (quorum *Quorum) CreateQuorum(stub shim.ChaincodeStubInterface, args []stri
 	}
 
 	// An admin can only create one signed quorum for any given proposal
+	var quorumList = []Quorum{}
 	quorumResult := new(Quorum)
 	//Select ProposalID from Model Quorum to check exist
-	queryString := fmt.Sprintf("{\"selector\": {\"_id\": {\"$regex\": \"\u0000Quorum_\"},\"ProposalID\": \"%s\"}", ProposalID)
-	//queryString := "{\"selector\": {\"_id\": {\"$regex\": \"Quorum_\"},\"ProposalID\": \"" + ProposalID + "\"}"
+	queryString := fmt.Sprintf("{\"selector\": {\"_id\": {\"$regex\": \"Quorum_\"},\"ProposalID\": \"%s\"}}", ProposalID)
 	resultsIterator, err := stub.GetQueryResult(queryString)
 	if err != nil {
 		resErr := ResponseError{ERR4, fmt.Sprintf("%s %s %s", ResCodeDict[ERR4], err.Error(), GetLine())}
@@ -67,11 +67,14 @@ func (quorum *Quorum) CreateQuorum(stub shim.ChaincodeStubInterface, args []stri
 			resErr := ResponseError{ERR3, fmt.Sprintf("%s %s %s", ResCodeDict[ERR3], err.Error(), GetLine())}
 			return RespondError(resErr)
 		}
+		quorumList = append(quorumList, *quorumResult)
 	}
 	// Check AdminID exits in Quorum model
-	if 0 == strings.Compare(quorumResult.AdminID, AdminID) {
-		resErr := ResponseError{ERR9, fmt.Sprintf("%s %s %s", ResCodeDict[ERR9], "Only signed once ", GetLine())}
-		return RespondError(resErr)
+	for _, quorumCompare := range quorumList {
+		if 0 == strings.Compare(quorumCompare.AdminID, AdminID) {
+			resErr := ResponseError{ERR9, fmt.Sprintf("%s %s %s", ResCodeDict[ERR9], "Only signed once ", GetLine())}
+			return RespondError(resErr)
+		}
 	}
 	// Select data from Admin Model
 	rs, err = util.Getdatabyid(stub, AdminID, models.ADMINTABLE)

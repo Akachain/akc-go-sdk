@@ -6,7 +6,8 @@ const COMMITTABLE = "Commit_"
 // Commit - struct
 type Commit struct {
 	CommitID   string   `json:"CommitID"`
+	AdminID    string   `json:"AdminID"`
 	ProposalID string   `json:"ProposalID"`
-	QuorumID   []string `json:"QuorumID"`
+	QuorumList []string `json:"QuorumList"`
 	Status     string   `json:"Status"`
 }

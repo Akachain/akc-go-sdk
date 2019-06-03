@@ -7,7 +7,7 @@ import (
 
 	. "github.com/hyperledger/fabric/core/chaincode/shim"
 	pb "github.com/hyperledger/fabric/protos/peer"
-	"github.com/op/go-logging"
+	logging "github.com/op/go-logging"
 )
 
 // Logger for the shim package.
@@ -65,6 +65,15 @@ func (stub *MockStubExtend) MockInvoke(uuid string, args [][]byte) pb.Response {
 	stub.args = args
 	stub.MockTransactionStart(uuid)
 	res := stub.cc.Invoke(stub)
+	stub.MockTransactionEnd(uuid)
+	return res
+}
+
+// Override this function from MockStub
+func (stub *MockStubExtend) MockInit(uuid string, args [][]byte) pb.Response {
+	stub.args = args
+	stub.MockTransactionStart(uuid)
+	res := stub.cc.Init(stub)
 	stub.MockTransactionEnd(uuid)
 	return res
 }
