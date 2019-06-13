@@ -48,6 +48,21 @@ func Getdatabyid(stub shim.ChaincodeStubInterface, ID string, MODELTABLE string)
 	return datastruct, nil
 }
 
+//get information of data  by row keys
+func Getdatabyrowkeys(stub shim.ChaincodeStubInterface, rowKeys []string, MODELTABLE string) (interface{}, error) {
+	var datastruct interface{}
+
+	row_was_found, err := GetTableRow(stub, MODELTABLE, rowKeys, &datastruct, FAIL_IF_MISSING)
+
+	if err != nil {
+		return nil, err
+	}
+	if !row_was_found {
+		return nil, fmt.Errorf("Data with rowKeys %s does not exist", rowKeys)
+	}
+	return datastruct, nil
+}
+
 //get all data
 func Getalldata(stub shim.ChaincodeStubInterface, MODELTABLE string) (chan []byte, error) {
 	row_json_bytes, err := GetTableRows(stub, MODELTABLE, []string{})
@@ -61,6 +76,25 @@ func Getalldata(stub shim.ChaincodeStubInterface, MODELTABLE string) (chan []byt
 func GetDataByID(stub shim.ChaincodeStubInterface, DataID string, data interface{}, ModelTable string) pb.Response {
 
 	rs, err := Getdatabyid(stub, DataID, ModelTable)
+
+	mapstructure.Decode(rs, data)
+	fmt.Printf("data: %v\n", data)
+
+	bytes, err := json.Marshal(data)
+	if err != nil {
+		//Convert Json Fail
+		resErr := common.ResponseError{common.ERR3, fmt.Sprintf("%s %s %s", common.ResCodeDict[common.ERR3], err.Error(), common.GetLine())}
+		return common.RespondError(resErr)
+	}
+	fmt.Printf("Response: %s\n", string(bytes))
+	resSuc := common.ResponseSuccess{common.SUCCESS, common.ResCodeDict[common.SUCCESS], string(bytes)}
+	return common.RespondSuccess(resSuc)
+}
+
+// GetDataByKey
+func GetDataByRowKeys(stub shim.ChaincodeStubInterface, rowKeys []string, data interface{}, ModelTable string) pb.Response {
+
+	rs, err := Getdatabyrowkeys(stub, rowKeys, ModelTable)
 
 	mapstructure.Decode(rs, data)
 	fmt.Printf("data: %v\n", data)
