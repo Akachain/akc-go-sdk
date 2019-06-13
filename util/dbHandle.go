@@ -2,40 +2,41 @@ package util
 
 import (
 	"encoding/json"
+	"time"
 
-	couchdb "github.com/leesper/couchdb-golang"
+	"github.com/hyperledger/fabric/common/metrics/disabled"
+	couchdb "github.com/hyperledger/fabric/core/ledger/util/couchdb"
 )
 
 const (
 	// DefaultBaseURL is the default address of CouchDB server.
-	DefaultBaseURL = "http://localhost:5984"
+	DefaultBaseURL = "localhost:5984"
 )
 
 type CouchDBHandler struct {
-	Database *couchdb.Database
+	CouchDatabase *couchdb.CouchDatabase
 }
 
 // NewCouchDBHandler returns a new CouchDBHandler and setup database for testing
-func NewCouchDBHandler(dbName string) *CouchDBHandler {
+func NewCouchDBHandler(dbName string) (*CouchDBHandler, error) {
 	handler := new(CouchDBHandler)
-	server, _ := handler.SetupServer(DefaultBaseURL)
-	handler.SetupDB(dbName, server)
-	return handler
-}
 
-// SetupServer creates a new couchDB server instance
-func (*CouchDBHandler) SetupServer(url string) (*couchdb.Server, error) {
-	server, err := couchdb.NewServer(url)
-	return server, err
-}
+	//Create a couchdb instance
+	couchDBInstance, er := couchdb.CreateCouchInstance(DefaultBaseURL, "", "", 3, 10, time.Second*30, true, &disabled.Provider{})
+	if er != nil {
+		return nil, er
+	}
 
-// SetupDB creates a new database instance with specific name
-func (handler *CouchDBHandler) SetupDB(name string, server *couchdb.Server) (*couchdb.Database, error) {
-	server.Delete(name)
-	var err error
-	db, err := server.Create(name)
-	handler.Database = db
-	return db, err
+	//Create a couchdatabase
+	db := couchdb.CouchDatabase{CouchInstance: couchDBInstance, DBName: dbName}
+	db.DropDatabase()
+	er = db.CreateDatabaseIfNotExist()
+	if er != nil {
+		return nil, er
+	}
+
+	handler.CouchDatabase = &db
+	return handler, nil
 }
 
 // SaveDocument stores a value in couchDB
@@ -43,15 +44,27 @@ func (handler *CouchDBHandler) SaveDocument(key string, value []byte) (string, e
 	// unmarshal the value param
 	var doc map[string]interface{}
 	json.Unmarshal(value, &doc)
-	// Add key as document id
-	doc["_id"] = key
+
 	// Save the doc in database
-	id, _, err := handler.Database.Save(doc, nil)
-	return id, err
+	rev, err := handler.CouchDatabase.SaveDoc(key, "", &couchdb.CouchDoc{JSONValue: value, Attachments: nil})
+	return rev, err
+}
+
+// UpdateDocument update a value in couchDB
+func (handler *CouchDBHandler) UpdateDocument(key string, value []byte) error {
+	// unmarshal the value param
+	var doc map[string]interface{}
+	json.Unmarshal(value, &doc)
+
+	_, rev, _ := handler.CouchDatabase.ReadDoc(key)
+
+	// Save the doc in database
+	_, err := handler.CouchDatabase.SaveDoc(key, rev, &couchdb.CouchDoc{JSONValue: value, Attachments: nil})
+	return err
 }
 
 // QueryDocument executes a query string and return results
-func (handler *CouchDBHandler) QueryDocument(query string) ([]map[string]interface{}, error) {
-	docsRaw, err := handler.Database.QueryJSON(query)
-	return docsRaw, err
+func (handler *CouchDBHandler) QueryDocument(query string) ([]*couchdb.QueryResult, error) {
+	rs, _, er := handler.CouchDatabase.QueryDocuments(query)
+	return rs, er
 }

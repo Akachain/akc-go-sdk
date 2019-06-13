@@ -33,7 +33,7 @@ func (stub *MockStubExtend) GetQueryResult(query string) (StateQueryIteratorInte
 	var filteredKeys = list.New()
 	for _, k := range rawdata {
 		//[]map[string]interface{}
-		filteredKeys.PushBack(k["_id"])
+		filteredKeys.PushBack(k.ID)
 	}
 
 	// Test
@@ -101,13 +101,20 @@ func (stub *MockStubExtend) GetStringArgs() []string {
 
 // PutState writes the specified `value` and `key` into the ledger.
 func (stub *MockStubExtend) PutState(key string, value []byte) error {
+
+	// In case we are using CouchDB, we store the value document in the database
+	if stub.CouchDB {
+		val, _ := stub.GetState(key)
+		if val != nil {
+			// Document exist, must update instead of create new
+			stub.DbHandler.UpdateDocument(key, value)
+		} else {
+			stub.DbHandler.SaveDocument(key, value)
+		}
+	}
+
 	// Carry on
 	stub.putStateOriginal(key, value)
-
-	// In case we are using CouchDB, we will also store the value document in the database
-	if stub.CouchDB {
-		stub.DbHandler.SaveDocument(key, value)
-	}
 
 	return nil
 }
