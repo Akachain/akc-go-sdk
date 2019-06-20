@@ -14,10 +14,11 @@ import (
 
 	. "github.com/Akachain/akc-go-sdk/common"
 	"github.com/Akachain/akc-go-sdk/util"
-	akc "github.com/akachain/akc-go-sdk/akc-htc"
 	"github.com/hyperledger/fabric/core/chaincode/shim"
 	pb "github.com/hyperledger/fabric/protos/peer"
 	"github.com/mitchellh/mapstructure"
+
+	akc "github.com/Akachain/akc-go-sdk/akc-htc"
 )
 
 var logger = shim.NewLogger("example_balance_transfer")
