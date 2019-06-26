@@ -284,7 +284,7 @@ func (akcStub *AkcHighThroughput) Prune(APIstub shim.ChaincodeStubInterface, arg
 					return []byte(""), fmt.Errorf(fmt.Sprintf("Unrecognized operation %s", operation))
 				}
 
-				responseMap[key].Data[0] = fmt.Sprintf("%f", mapValue)
+				responseMap[key].Data[0] = fmt.Sprintf("%v", mapValue)
 			} else {
 				dataResult.Key = key
 				dataResult.Data = []string{valueStr}
