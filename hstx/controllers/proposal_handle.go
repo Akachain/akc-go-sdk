@@ -11,9 +11,20 @@ import (
 	"github.com/Akachain/akc-go-sdk/util"
 	"github.com/hyperledger/fabric/core/chaincode/shim"
 	pb "github.com/hyperledger/fabric/protos/peer"
+	"github.com/mitchellh/mapstructure"
 )
 
 type Proposal models.Proposal
+
+func row_keys_of_Proposal(proposal *Proposal) []string {
+	return []string{proposal.ProposalID}
+}
+
+// Update Proposal Infomation
+func change_proposal_info_(stub shim.ChaincodeStubInterface, proposal *Proposal) error {
+	_, err := util.InsertTableRow(stub, models.PROPOSALTABLE, row_keys_of_Proposal(proposal), proposal, util.FAIL_UNLESS_OVERWRITE, nil)
+	return err
+}
 
 //High secure transaction Proposal handle
 // ------------------- //
@@ -26,13 +37,36 @@ func (proposal *Proposal) CreateProposal(stub shim.ChaincodeStubInterface, args 
 	txTimeStamp, _ := stub.GetTxTimestamp()
 	CreateDatetime := time.Unix(txTimeStamp.Seconds, int64(txTimeStamp.Nanos)).UTC()
 
-	err := util.Createdata(stub, models.PROPOSALTABLE, []string{ProposalID}, &Proposal{ProposalID: ProposalID, Data: Data, CreateDateTime: CreateDatetime.String()})
+	err := util.Createdata(stub, models.PROPOSALTABLE, []string{ProposalID}, &Proposal{ProposalID: ProposalID, Data: Data, Status: "Pending", CreateDateTime: CreateDatetime.String()})
 	if err != nil {
 		resErr := ResponseError{ERR5, fmt.Sprintf("%s %s %s", ResCodeDict[ERR5], err.Error(), GetLine())}
 		return RespondError(resErr)
 	}
 	resSuc := ResponseSuccess{SUCCESS, ResCodeDict[SUCCESS], ProposalID}
 	return RespondSuccess(resSuc)
+}
+
+func UpdateProposal(stub shim.ChaincodeStubInterface, ProposalID string, Status string) error {
+	// get proposal information
+	var proposal_tmp = new(Proposal)
+
+	rs, err := util.Getdatabyid(stub, ProposalID, models.PROPOSALTABLE)
+	mapstructure.Decode(rs, proposal_tmp)
+
+	if err != nil {
+		return err
+	}
+
+	fmt.Printf("rs: %v\n", rs)
+	fmt.Printf("proposal_tmp: %v\n", proposal_tmp)
+
+	proposal_tmp.Status = Status
+
+	err = change_proposal_info_(stub, proposal_tmp)
+	if err != nil {
+		return err
+	}
+	return nil
 }
 
 // GetProposalByID
@@ -53,10 +87,10 @@ func (proposal *Proposal) GetAllProposal(stub shim.ChaincodeStubInterface) pb.Re
 func (proposal *Proposal) GetProposalNotSign(stub shim.ChaincodeStubInterface, args []string) pb.Response {
 	AdminID := args[0]
 	var proposalList = []Proposal{}
-	var proposalListResponse []string
+	var proposalListResponse = []Proposal{}
 	proposalResult := new(Proposal)
 
-	queryStringProposal := fmt.Sprintf("{\"selector\": {\"_id\": {\"$regex\": \"Proposal_\"}}}")
+	queryStringProposal := fmt.Sprintf("{\"selector\": {\"_id\": {\"$regex\": \"Proposal_\"},\"Status\":\"Pending\" }}")
 
 	resultsIterator, errProposal := stub.GetQueryResult(queryStringProposal)
 	if errProposal != nil {
@@ -108,7 +142,7 @@ func (proposal *Proposal) GetProposalNotSign(stub shim.ChaincodeStubInterface, a
 
 		// Check ProposalID exits in Quorum model
 		if len(quorumList) == 0 {
-			proposalListResponse = append(proposalListResponse, proposal.ProposalID)
+			proposalListResponse = append(proposalListResponse, proposal)
 		}
 	}
 	proposalJson, err2 := json.Marshal(proposalListResponse)

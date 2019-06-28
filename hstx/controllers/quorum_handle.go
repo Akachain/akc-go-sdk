@@ -119,10 +119,12 @@ func (quorum *Quorum) CreateQuorum(stub shim.ChaincodeStubInterface, args []stri
 
 	QuorumID := stub.GetTxID()
 	err = util.Createdata(stub, models.QUORUMTABLE, []string{QuorumID}, &Quorum{AdminID: AdminID, QuorumID: QuorumID, ProposalID: ProposalID, Status: "Verify"})
+
 	if err != nil {
 		resErr := ResponseError{ERR5, fmt.Sprintf("%s %s %s", ResCodeDict[ERR5], err.Error(), GetLine())}
 		return RespondError(resErr)
 	}
+
 	resSuc := ResponseSuccess{SUCCESS, ResCodeDict[SUCCESS], QuorumID}
 	return RespondSuccess(resSuc)
 }
@@ -237,6 +239,14 @@ func (quorum *Quorum) CreateReject(stub shim.ChaincodeStubInterface, args []stri
 		resErr := ResponseError{ERR5, fmt.Sprintf("%s %s %s", ResCodeDict[ERR5], err.Error(), GetLine())}
 		return RespondError(resErr)
 	}
+
+	err = UpdateProposal(stub, ProposalID, "Reject")
+	fmt.Printf("err: %v\n", err)
+	if err != nil {
+		resErr := ResponseError{ERR5, fmt.Sprintf("%s %s %s", ResCodeDict[ERR5], err.Error(), GetLine())}
+		return RespondError(resErr)
+	}
+
 	resSuc := ResponseSuccess{SUCCESS, ResCodeDict[SUCCESS], QuorumID}
 	return RespondSuccess(resSuc)
 }

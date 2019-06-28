@@ -7,5 +7,6 @@ const PROPOSALTABLE = "Proposal_"
 type Proposal struct {
 	ProposalID     string `json:"ProposalID"`
 	Data           string `json:"Data"`
+	Status         string `json:"Status"`
 	CreateDateTime string `json:"CreateDateTime"`
 }

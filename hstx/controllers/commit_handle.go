@@ -134,6 +134,13 @@ func (commit *Commit) CreateCommit(stub shim.ChaincodeStubInterface, args []stri
 		resErr := ResponseError{ERR5, fmt.Sprintf("%s %s %s", ResCodeDict[ERR5], err.Error(), GetLine())}
 		return RespondError(resErr)
 	}
+	err = UpdateProposal(stub, ProposalID, "Approve")
+	fmt.Printf("err: %v\n", err)
+	if err != nil {
+		resErr := ResponseError{ERR5, fmt.Sprintf("%s %s %s", ResCodeDict[ERR5], err.Error(), GetLine())}
+		return RespondError(resErr)
+	}
+
 	resSuc := ResponseSuccess{SUCCESS, ResCodeDict[SUCCESS], CommitID}
 	return RespondSuccess(resSuc)
 }
