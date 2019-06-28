@@ -76,10 +76,11 @@ func Getalldata(stub shim.ChaincodeStubInterface, MODELTABLE string) (chan []byt
 func GetDataByID(stub shim.ChaincodeStubInterface, DataID string, data interface{}, ModelTable string) pb.Response {
 
 	rs, err := Getdatabyid(stub, DataID, ModelTable)
-
-	mapstructure.Decode(rs, data)
-	fmt.Printf("data: %v\n", data)
-
+	if rs != nil {
+		mapstructure.Decode(rs, data)
+	} else {
+		data = nil
+	}
 	bytes, err := json.Marshal(data)
 	if err != nil {
 		//Convert Json Fail
