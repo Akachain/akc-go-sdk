@@ -113,6 +113,11 @@ func (commit *Commit) CreateCommit(stub shim.ChaincodeStubInterface, args []stri
 					quorumIDList = append(quorumIDList, quorum.QuorumID)
 				}
 			}
+		} else if quorum.Status == "Reject" {
+			Logger.Debug("Reject: %v", count)
+			AdminReject := fmt.Sprintf("Proposal: %s  was rejected by AdminID: %s", quorum.ProposalID, quorum.AdminID)
+			resErr := ResponseError{ERR10, fmt.Sprintf("%s %s %s", ResCodeDict[ERR16], AdminReject, GetLine())}
+			return RespondError(resErr)
 		}
 	}
 

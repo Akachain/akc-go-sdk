@@ -30,6 +30,9 @@ const (
 	ERR13   = "AKC0013"
 	ERR14   = "AKC0014"
 	ERR15   = "AKC0015"
+	ERR16   = "AKC0016"
+	ERR17   = "AKC0017"
+	ERR18   = "AKC0018"
 )
 
 var ResCodeDict = map[string]string{
@@ -49,6 +52,9 @@ var ResCodeDict = map[string]string{
 	"AKC0013": "Proposal ID not exist!",
 	"AKC0014": "Admin ID not exist!",
 	"AKC0015": "Admin ID not Active!",
+	"AKC0016": "Proposal Rejected!",
+	"AKC0017": "You have confirmed you cannot reject!",
+	"AKC0018": "Only reject once!",
 }
 
 type InvokeResponse struct {
@@ -74,7 +80,8 @@ func RespondSuccess(res ResponseSuccess) pb.Response {
 	}
 	return pb.Response{
 		Status:  OK,
-		Payload: []byte("{\"status\":\"" + res.ResCode + "\", \"msg\":\"" + res.Msg + "\", \"rows\":\"" + res.Payload + "\"}"),
+		Payload: []byte(res.Payload),
+		Message: res.Payload,
 	}
 }
 
