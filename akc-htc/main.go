@@ -296,9 +296,15 @@ func (akcStub *AkcHighThroughput) Prune(APIstub shim.ChaincodeStubInterface, arg
 			if deltaRowDelErr != nil {
 				return []byte(""), fmt.Errorf(fmt.Sprintf("Could not delete delta row: %s", deltaRowDelErr.Error()))
 			}
+		}
+
+		// Loop and destroy
+		for _, data := range responseMap {
+			keyStrMap := data.Key
+			valueStrMap := data.Data[0]
 
 			// Update the ledger with the final value and return
-			_, updateErr := akcStub.pruneFastUpdate(APIstub, name, key, valueStr)
+			_, updateErr := akcStub.pruneFastUpdate(APIstub, name, keyStrMap, valueStrMap)
 			if updateErr != nil {
 				return []byte(""), updateErr
 			}
