@@ -76,6 +76,11 @@ func Getalldata(stub shim.ChaincodeStubInterface, MODELTABLE string) (chan []byt
 func GetDataByID(stub shim.ChaincodeStubInterface, DataID string, data interface{}, ModelTable string) pb.Response {
 
 	rs, err := Getdatabyid(stub, DataID, ModelTable)
+	if err != nil {
+		//Get Data Fail
+		resErr := common.ResponseError{common.ERR4, fmt.Sprintf("%s %s %s", common.ResCodeDict[common.ERR4], err.Error(), common.GetLine())}
+		return common.RespondError(resErr)
+	}
 	if rs != nil {
 		mapstructure.Decode(rs, data)
 	} else {
@@ -96,6 +101,11 @@ func GetDataByID(stub shim.ChaincodeStubInterface, DataID string, data interface
 func GetDataByRowKeys(stub shim.ChaincodeStubInterface, rowKeys []string, data interface{}, ModelTable string) pb.Response {
 
 	rs, err := Getdatabyrowkeys(stub, rowKeys, ModelTable)
+	if err != nil {
+		//Get Data Fail
+		resErr := common.ResponseError{common.ERR4, fmt.Sprintf("%s %s %s", common.ResCodeDict[common.ERR4], err.Error(), common.GetLine())}
+		return common.RespondError(resErr)
+	}
 	if rs != nil {
 		mapstructure.Decode(rs, data)
 	} else {
@@ -120,7 +130,11 @@ func GetAllData(stub shim.ChaincodeStubInterface, data interface{}, ModelTable s
 	var Datalist = make([]map[string]interface{}, 0)
 
 	datalbytes, err := Getalldata(stub, ModelTable)
-
+	if err != nil {
+		//Get Data Fail
+		resErr := common.ResponseError{common.ERR4, fmt.Sprintf("%s %s %s", common.ResCodeDict[common.ERR4], err.Error(), common.GetLine())}
+		return common.RespondError(resErr)
+	}
 	for row_json_bytes := range datalbytes {
 
 		err := json.Unmarshal(row_json_bytes, data)
