@@ -96,9 +96,11 @@ func GetDataByID(stub shim.ChaincodeStubInterface, DataID string, data interface
 func GetDataByRowKeys(stub shim.ChaincodeStubInterface, rowKeys []string, data interface{}, ModelTable string) pb.Response {
 
 	rs, err := Getdatabyrowkeys(stub, rowKeys, ModelTable)
-
-	mapstructure.Decode(rs, data)
-	fmt.Printf("data: %v\n", data)
+	if rs != nil {
+		mapstructure.Decode(rs, data)
+	} else {
+		data = nil
+	}
 
 	bytes, err := json.Marshal(data)
 	if err != nil {
@@ -114,23 +116,40 @@ func GetDataByRowKeys(stub shim.ChaincodeStubInterface, rowKeys []string, data i
 // GetAllData
 func GetAllData(stub shim.ChaincodeStubInterface, data interface{}, ModelTable string) pb.Response {
 
-	var Datalist []interface{}
+	// var Datalist []interface{}
+	var Datalist = make([]map[string]interface{}, 0)
 
 	datalbytes, err := Getalldata(stub, ModelTable)
-	for row_json_bytes := range datalbytes {
-		err = json.Unmarshal(row_json_bytes, data)
-		if err != nil {
 
-			resErr := common.ResponseError{common.ERR6, common.ResCodeDict[common.ERR6]}
+	for row_json_bytes := range datalbytes {
+
+		err := json.Unmarshal(row_json_bytes, data)
+		if err != nil {
+			resErr := common.ResponseError{common.ERR3, common.ResCodeDict[common.ERR6]}
 			return common.RespondError(resErr)
 		}
-		Datalist = append(Datalist, data)
+
+		bytes, err := json.Marshal(data)
+		if err != nil {
+			//convert JSON eror
+			resErr := common.ResponseError{common.ERR3, common.ResCodeDict[common.ERR6]}
+			return common.RespondError(resErr)
+		}
+
+		var temp map[string]interface{}
+		err = json.Unmarshal(bytes, &temp)
+		if err != nil {
+			resErr := common.ResponseError{common.ERR3, common.ResCodeDict[common.ERR6]}
+			return common.RespondError(resErr)
+		}
+		Datalist = append(Datalist, temp)
 	}
 	if err != nil {
 		//Get data eror
 		resErr := common.ResponseError{common.ERR3, common.ResCodeDict[common.ERR3]}
 		return common.RespondError(resErr)
 	}
+	fmt.Printf("Datalist: %v\n", Datalist)
 	dataJson, err2 := json.Marshal(Datalist)
 	if err2 != nil {
 		//convert JSON eror
