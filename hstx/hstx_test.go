@@ -19,7 +19,7 @@ func TestInit(t *testing.T) {
 	// Setup mockextend
 	cc := new(Chaincode)
 	stub := util.NewMockStubExtend(shim.NewMockStub("hstx", cc), cc)
-	db := util.NewCouchDBHandler("hstx-test")
+	db, _ := util.NewCouchDBHandler("hstx-test", false)
 	stub.SetCouchDBConfiguration(db)
 	//pubKey1, _ := ioutil.ReadFile("./sample/pk1.pem")
 	//pk1 := base64.StdEncoding.EncodeToString(pubKey1)
@@ -46,7 +46,7 @@ func TestAdmin(t *testing.T) {
 	// Setup mockextend
 	cc := new(Chaincode)
 	stub := util.NewMockStubExtend(shim.NewMockStub("hstx", cc), cc)
-	db := util.NewCouchDBHandler("hstx-test")
+	db, _ := util.NewCouchDBHandler("hstx-test", false)
 	stub.SetCouchDBConfiguration(db)
 	adminName := "Admin1"
 	pubKey, _ := ioutil.ReadFile("./sample/pk1.pem")
@@ -74,7 +74,7 @@ func TestProposal(t *testing.T) {
 	// Setup mockextend
 	cc := new(Chaincode)
 	stub := util.NewMockStubExtend(shim.NewMockStub("hstx", cc), cc)
-	db := util.NewCouchDBHandler("hstx-test")
+	db, _ := util.NewCouchDBHandler("hstx-test", false)
 	stub.SetCouchDBConfiguration(db)
 	prData := "Update Money"
 
@@ -99,7 +99,7 @@ func TestQuorum(t *testing.T) {
 	// Setup mockextend
 	cc := new(Chaincode)
 	stub := util.NewMockStubExtend(shim.NewMockStub("hstx", cc), cc)
-	db := util.NewCouchDBHandler("hstx-test")
+	db, _ := util.NewCouchDBHandler("hstx-test", false)
 	stub.SetCouchDBConfiguration(db)
 	pubKey1, _ := ioutil.ReadFile("./sample/pk1.pem")
 	signature1, _ := ioutil.ReadFile("./sample/signature1.txt")
@@ -147,7 +147,7 @@ func TestQuorum_Err(t *testing.T) {
 	// Setup mockextend
 	cc := new(Chaincode)
 	stub := util.NewMockStubExtend(shim.NewMockStub("hstx", cc), cc)
-	db := util.NewCouchDBHandler("hstx-test")
+	db, _ := util.NewCouchDBHandler("hstx-test", false)
 	stub.SetCouchDBConfiguration(db)
 	pubKey1, _ := ioutil.ReadFile("./sample/pk1.pem")
 	signature1, _ := ioutil.ReadFile("./sample/signature1.txt")
@@ -226,7 +226,7 @@ func TestCommit(t *testing.T) {
 	// Setup mockextend
 	cc := new(Chaincode)
 	stub := util.NewMockStubExtend(shim.NewMockStub("hstx", cc), cc)
-	db := util.NewCouchDBHandler("hstx-test")
+	db, _ := util.NewCouchDBHandler("hstx-test", false)
 	stub.SetCouchDBConfiguration(db)
 	pubKey1, _ := ioutil.ReadFile("./sample/pk1.pem")
 	pubKey2, _ := ioutil.ReadFile("./sample/pk2.pem")
@@ -329,7 +329,7 @@ func TestCommit_Err(t *testing.T) {
 	// Setup mockextend
 	cc := new(Chaincode)
 	stub := util.NewMockStubExtend(shim.NewMockStub("hstx", cc), cc)
-	db := util.NewCouchDBHandler("hstx-test")
+	db, _ := util.NewCouchDBHandler("hstx-test", false)
 	stub.SetCouchDBConfiguration(db)
 	pubKey1, _ := ioutil.ReadFile("./sample/pk1.pem")
 	pubKey2, _ := ioutil.ReadFile("./sample/pk2.pem")

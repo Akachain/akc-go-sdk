@@ -18,7 +18,7 @@ type CouchDBHandler struct {
 }
 
 // NewCouchDBHandler returns a new CouchDBHandler and setup database for testing
-func NewCouchDBHandler(dbName string) (*CouchDBHandler, error) {
+func NewCouchDBHandler(dbName string, isDrop bool) (*CouchDBHandler, error) {
 	handler := new(CouchDBHandler)
 
 	//Create a couchdb instance
@@ -29,7 +29,10 @@ func NewCouchDBHandler(dbName string) (*CouchDBHandler, error) {
 
 	//Create a couchdatabase
 	db := couchdb.CouchDatabase{CouchInstance: couchDBInstance, DBName: dbName}
-	db.DropDatabase()
+	if isDrop == true {
+		db.DropDatabase()
+	}
+
 	er = db.CreateDatabaseIfNotExist()
 	if er != nil {
 		return nil, er
