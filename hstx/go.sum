@@ -1,6 +1,8 @@
 cloud.google.com/go v0.26.0/go.mod h1:aQUYkXzVsufM+DwF1aE+0xfcU+56JwCaLick0ClmMTw=
 github.com/Akachain/akc-go-sdk v0.0.0-20190708100839-f9c45e272188 h1:io+5+EiKr40suMEve043J4nJ8bxqjPs1eqGkpZUxrCw=
 github.com/Akachain/akc-go-sdk v0.0.0-20190708100839-f9c45e272188/go.mod h1:kkKjKhiswNeRhXS+IomONX0jaAcjWR9/3bgYuhjfAdw=
+github.com/Akachain/akc-go-sdk v1.0.0 h1:Mr9uZ7e684rXVUHBWcv5uG2SMOCE+7MzrA3VkFs6hUE=
+github.com/Akachain/akc-go-sdk v1.0.0/go.mod h1:kkKjKhiswNeRhXS+IomONX0jaAcjWR9/3bgYuhjfAdw=
 github.com/Azure/go-ansiterm v0.0.0-20170929234023-d6e3b3328b78/go.mod h1:LmzpDX56iTiv29bbRTIsUNlaFfuhWRQBWjQdVyAevI8=
 github.com/BurntSushi/toml v0.3.1/go.mod h1:xHWCNGjB5oqiDr8zfno3MHue2Ht5sIBksp03qcyfWMU=
 github.com/Microsoft/go-winio v0.4.12/go.mod h1:VhR8bwka0BXejwEJY73c50VrPtXAaKcyvVC4A4RozmA=

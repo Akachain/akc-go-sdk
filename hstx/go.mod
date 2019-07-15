@@ -3,7 +3,7 @@ module akc-hstx
 go 1.12
 
 require (
-	github.com/Akachain/akc-go-sdk v0.0.0-20190708100839-f9c45e272188
+	github.com/Akachain/akc-go-sdk v1.0.0
 	github.com/fsouza/go-dockerclient v1.4.1 // indirect
 	github.com/golang/protobuf v1.3.2 // indirect
 	github.com/hyperledger/fabric v1.4.1
