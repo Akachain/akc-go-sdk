@@ -1,4 +1,4 @@
-module akc-htc
+module akchtc
 
 go 1.12
 
