@@ -1,4 +1,4 @@
-module akchtc
+module github.com/Akachain/akc-go-sdk/akchtc
 
 go 1.12
 
