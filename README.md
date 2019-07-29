@@ -73,5 +73,7 @@ func TestSample(t *testing.T) {
 ## 2. High Throughput Chaincode (HTC)
 Please follow the instruction [here](https://docs.google.com/document/d/18IpdA-Io7hLNZs7cjHig-6bp4dCt0F-sK1cF1pC_euw/edit?usp=sharing)
 
-## 3. High Secure Transaction Chaincode 
-Please follow the instruction [here](https://drive.google.com/open?id=1FDVoU8L2a2U8rISxWei_ITMx4JchrS6n)
+## 3. High Secure Transaction Chaincode (HSTX)
+A high level description of HSTX is described [here](https://drive.google.com/open?id=1FDVoU8L2a2U8rISxWei_ITMx4JchrS6n). It is still in R&D phase.
+
+We have a live demo [here](https://akc-sdk.akachain.io/#/home)
