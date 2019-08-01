@@ -119,6 +119,40 @@ func (stub *MockStubExtend) PutState(key string, value []byte) error {
 	return nil
 }
 
+// PutState writes the specified `value` and `key` into the ledger.
+func (stub *MockStubExtend) DelState(key string) error {
+
+	// In case we are using CouchDB, we store the value document in the database
+	if stub.CouchDB {
+		val, _ := stub.GetState(key)
+		if val != nil {
+			// Document exist, must update instead of create new
+			stub.DbHandler.DeleteDocument(key)
+		} else {
+			return errors.New("key does not exist")
+		}
+	}
+
+	// Carry on
+	stub.DelStateOriginal(key)
+
+	return nil
+}
+
+// This is copied from mockstub as we still need to carry on normal delState operation with the mock ledger map
+func (stub *MockStubExtend) DelStateOriginal(key string) error {
+	mockLogger.Debug("MockStub", stub.Name, "Deleting", key, stub.State[key])
+	delete(stub.State, key)
+
+	for elem := stub.Keys.Front(); elem != nil; elem = elem.Next() {
+		if strings.Compare(key, elem.Value.(string)) == 0 {
+			stub.Keys.Remove(elem)
+		}
+	}
+
+	return nil
+}
+
 // This is copied from mockstub as we still need to carry on normal putstate operation with the mock ledger map
 func (stub *MockStubExtend) putStateOriginal(key string, value []byte) error {
 	if stub.TxID == "" {

@@ -76,3 +76,10 @@ func (handler *CouchDBHandler) QueryDocument(query string) ([]*couchdb.QueryResu
 	rs, _, er := handler.CouchDatabase.QueryDocuments(query)
 	return rs, er
 }
+
+// DeleteDocument delete a specific document on couchdb
+func (handler *CouchDBHandler) DeleteDocument(key string) error {
+	_, rev, _ := handler.CouchDatabase.ReadDoc(key)
+	er := handler.CouchDatabase.DeleteDoc(key, rev)
+	return er
+}
