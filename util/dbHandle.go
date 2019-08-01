@@ -17,12 +17,12 @@ type CouchDBHandler struct {
 	CouchDatabase *couchdb.CouchDatabase
 }
 
-// NewCouchDBHandler returns a new CouchDBHandler and setup database for testing
-func NewCouchDBHandler(dbName string, isDrop bool) (*CouchDBHandler, error) {
+// NewCouchDBHandlerWithConnection returns a new CouchDBHandler and setup database for testing
+func NewCouchDBHandlerWithConnection(dbName string, isDrop bool, connectionString string) (*CouchDBHandler, error) {
 	handler := new(CouchDBHandler)
 
 	//Create a couchdb instance
-	couchDBInstance, er := couchdb.CreateCouchInstance(DefaultBaseURL, "", "", 3, 10, time.Second*30, true, &disabled.Provider{})
+	couchDBInstance, er := couchdb.CreateCouchInstance(connectionString, "", "", 3, 10, time.Second*30, true, &disabled.Provider{})
 	if er != nil {
 		return nil, er
 	}
@@ -40,6 +40,11 @@ func NewCouchDBHandler(dbName string, isDrop bool) (*CouchDBHandler, error) {
 
 	handler.CouchDatabase = &db
 	return handler, nil
+}
+
+// NewCouchDBHandler returns a new CouchDBHandler and setup database for testing
+func NewCouchDBHandler(dbName string, isDrop bool) (*CouchDBHandler, error) {
+	return NewCouchDBHandlerWithConnection(dbName, isDrop, DefaultBaseURL)
 }
 
 // SaveDocument stores a value in couchDB
