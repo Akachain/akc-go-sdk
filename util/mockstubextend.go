@@ -90,7 +90,7 @@ func (stub *MockStubExtend) GetFunctionAndParameters() (function string, params 
 	return
 }
 
-// Override this function from MockStub
+// GetStringArgs override this function from MockStub
 func (stub *MockStubExtend) GetStringArgs() []string {
 	strargs := make([]string, 0, len(stub.args))
 	for _, barg := range stub.args {
@@ -111,15 +111,36 @@ func (stub *MockStubExtend) PutState(key string, value []byte) error {
 		} else {
 			stub.DbHandler.SaveDocument(key, value)
 		}
+	} else {
+		// Carry on
+		stub.putStateOriginal(key, value)
 	}
-
-	// Carry on
-	stub.putStateOriginal(key, value)
-
 	return nil
 }
 
-// PutState writes the specified `value` and `key` into the ledger.
+// GetState retrieves the value for a given key from the ledger
+func (stub *MockStubExtend) GetState(key string) ([]byte, error) {
+	// In case we are using CouchDB, we store the value document in the database
+	if stub.CouchDB {
+		doc, _, er := stub.DbHandler.ReadDocument(key)
+		if doc != nil {
+			return doc.JSONValue, nil
+		}
+		return nil, er
+	}
+
+	// Else we can just carry on
+	return stub.GetStateOriginal(key)
+}
+
+// GetStateOriginal is copied from mockstub as we still need to carry on normal GetState operation with the mock ledger map
+func (stub *MockStubExtend) GetStateOriginal(key string) ([]byte, error) {
+	value := stub.State[key]
+	mockLogger.Debug("MockStub", stub.Name, "Getting", key, value)
+	return value, nil
+}
+
+// DelState writes the specified `value` and `key` into the ledger.
 func (stub *MockStubExtend) DelState(key string) error {
 
 	// In case we are using CouchDB, we store the value document in the database
@@ -139,7 +160,7 @@ func (stub *MockStubExtend) DelState(key string) error {
 	return nil
 }
 
-// This is copied from mockstub as we still need to carry on normal delState operation with the mock ledger map
+// DelStateOriginal is copied from mockstub as we still need to carry on normal delState operation with the mock ledger map
 func (stub *MockStubExtend) DelStateOriginal(key string) error {
 	mockLogger.Debug("MockStub", stub.Name, "Deleting", key, stub.State[key])
 	delete(stub.State, key)

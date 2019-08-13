@@ -69,6 +69,7 @@ func (iter *mockFilterQueryIterator) Close() error {
 	return nil
 }
 
+// NewMockFilterQueryIterator returns a new mockFilterQueryIterator object
 func NewMockFilterQueryIterator(stub *MockStubExtend, keys *list.List) *mockFilterQueryIterator {
 	iter := new(mockFilterQueryIterator)
 	iter.Closed = false
