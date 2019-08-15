@@ -16,4 +16,5 @@ require (
 	github.com/mitchellh/mapstructure v1.1.2
 	github.com/onsi/gomega v1.5.0 // indirect
 	github.com/stretchr/testify v1.3.0
+	github.com/tedsuo/ifrit v0.0.0-20180802180643-bea94bb476cc // indirect
 )

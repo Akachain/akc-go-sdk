@@ -37,3 +37,7 @@ func (it *AkcQueryIterator) Next() (*queryresult.KV, error) {
 
 	return kv, nil
 }
+
+func (iter *AkcQueryIterator) Close() error {
+	return nil
+}
