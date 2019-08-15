@@ -59,13 +59,14 @@ func TestPartialQuery(t *testing.T) {
 	}
 
 	stub.GetStateByPartialCompositeKey(DATATABLE, []string{key1})
-
 }
 
 func TestSimpleData(t *testing.T) {
 	stub := setupMock()
 	key1 := "key1"
 	key2 := "key2"
+	key3 := "key1'"
+	key4 := "key2'"
 	val1 := "val1"
 	val2 := "val2"
 
@@ -74,12 +75,34 @@ func TestSimpleData(t *testing.T) {
 	// Check if the created data exist in the ledger
 	compositeKey, _ := stub.CreateCompositeKey(DATATABLE, []string{key1, key2})
 	state, _ := stub.GetState(compositeKey)
-	var ad Data
-	json.Unmarshal([]byte(state), &ad)
+	var ad [10]Data
+
+	json.Unmarshal([]byte(state), &ad[0])
 
 	// Check if the created data information is correct
-	assert.Equal(t, key1, ad.Key1)
-	assert.Equal(t, key2, ad.Key2)
-	assert.Equal(t, val1, ad.Attribute1)
-	assert.Equal(t, val2, ad.Attribute2)
+	assert.Equal(t, key1, ad[0].Key1)
+	assert.Equal(t, key2, ad[0].Key2)
+	assert.Equal(t, val1, ad[0].Attribute1)
+	assert.Equal(t, val2, ad[0].Attribute2)
+
+	// Test query string
+	util.MockInvokeTransaction(t, stub, [][]byte{[]byte("CreateData"), []byte(key3), []byte(key4), []byte(val1), []byte(val2)})
+
+	queryString := "{\"selector\": {\"_id\": {\"$regex\": \"Data_\"}}}"
+	resultsIterator, _ := stub.GetQueryResult(queryString)
+
+	i := 0
+	for resultsIterator.HasNext() {
+		queryResponse, _ := resultsIterator.Next()
+		json.Unmarshal(queryResponse.Value, &ad[i])
+		i++
+	}
+
+	// Check if the created data information is correct
+	assert.Equal(t, key1, ad[0].Key1)
+	assert.Equal(t, key2, ad[0].Key2)
+	assert.Equal(t, val1, ad[0].Attribute1)
+	assert.Equal(t, val2, ad[0].Attribute2)
+	assert.Equal(t, key3, ad[1].Key1)
+	assert.Equal(t, key4, ad[1].Key2)
 }

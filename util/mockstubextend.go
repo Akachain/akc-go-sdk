@@ -1,13 +1,17 @@
 package util
 
 import (
-	"container/list"
 	"errors"
 	"strings"
+	"unicode/utf8"
 
 	. "github.com/hyperledger/fabric/core/chaincode/shim"
 	pb "github.com/hyperledger/fabric/protos/peer"
 	logging "github.com/op/go-logging"
+)
+
+const (
+	maxUnicodeRuneValue = utf8.MaxRune //U+10FFFF - maximum (and unallocated) code point
 )
 
 // Logger for the shim package.
@@ -26,25 +30,14 @@ type MockStubExtend struct {
 // that did not implement anything.
 func (stub *MockStubExtend) GetQueryResult(query string) (StateQueryIteratorInterface, error) {
 	// Query data from couchDB
-	rawdata, _ := stub.DbHandler.QueryDocument(query)
-	mockLogger.Debug(rawdata)
+	rawdata, error := stub.DbHandler.QueryDocument(query)
 
-	// A list containing ledger keys filtered by the query string
-	var filteredKeys = list.New()
-	for _, k := range rawdata {
-		//[]map[string]interface{}
-		filteredKeys.PushBack(k.ID)
+	if error != nil {
+		return nil, error
 	}
 
-	// Test
-	r := NewMockFilterQueryIterator(stub, filteredKeys)
-	return r, nil
-}
-
-type MockStateQueryIterator struct {
-	Closed  bool
-	Data    *map[string][]byte
-	Current *list.Element
+	rs := &AkcQueryIterator{data: rawdata, currentLoc: 0}
+	return rs, nil
 }
 
 func NewMockStubExtend(stub *MockStub, c Chaincode) *MockStubExtend {
@@ -222,4 +215,12 @@ func (stub *MockStubExtend) putStateOriginal(key string, value []byte) error {
 	}
 
 	return nil
+}
+
+func (stub *MockStubExtend) GetStateByPartialCompositeKey(objectType string, attributes []string) (StateQueryIteratorInterface, error) {
+	//startKey, _ := stub.CreateCompositeKey(objectType, attributes)
+	//endKey := startKey + string(maxUnicodeRuneValue)
+
+	//stub.DbHandler.QueryDocumentByRange(startKey, endKey, 1000) //
+	return nil, nil
 }

@@ -89,3 +89,9 @@ func (handler *CouchDBHandler) DeleteDocument(key string) error {
 	er := handler.CouchDatabase.DeleteDoc(key, rev)
 	return er
 }
+
+// QueryDocumentByRange get a list of documents from couchDB by key range
+func (handler *CouchDBHandler) QueryDocumentByRange(startKey, endKey string, limit int32) ([]*couchdb.QueryResult, string, error) {
+	rs, next, er := handler.CouchDatabase.ReadDocRange(startKey, endKey, limit)
+	return rs, next, er
+}

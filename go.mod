@@ -14,5 +14,6 @@ require (
 	github.com/Akachain/akc-go-sdk/util v0.0.0
 	github.com/hyperledger/fabric v1.4.2
 	github.com/mitchellh/mapstructure v1.1.2
+	github.com/onsi/gomega v1.5.0 // indirect
 	github.com/stretchr/testify v1.3.0
 )
