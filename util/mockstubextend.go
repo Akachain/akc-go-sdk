@@ -217,10 +217,26 @@ func (stub *MockStubExtend) putStateOriginal(key string, value []byte) error {
 	return nil
 }
 
+// GetStateByPartialCompositeKey queries couchdb by range
 func (stub *MockStubExtend) GetStateByPartialCompositeKey(objectType string, attributes []string) (StateQueryIteratorInterface, error) {
-	//startKey, _ := stub.CreateCompositeKey(objectType, attributes)
-	//endKey := startKey + string(maxUnicodeRuneValue)
 
-	//stub.DbHandler.QueryDocumentByRange(startKey, endKey, 1000) //
-	return nil, nil
+	rs, _, er := stub.GetStateByPartialCompositeKeyWithPagination(objectType, attributes, 1000, "")
+
+	return rs, er
+}
+
+// GetStateByPartialCompositeKeyWithPagination queries couchdb with a partial compositekey and pagination information
+func (stub *MockStubExtend) GetStateByPartialCompositeKeyWithPagination(objectType string, attributes []string, pageSize int32, bookmark string) (StateQueryIteratorInterface, *pb.QueryResponseMetadata, error) {
+	startKey, _ := stub.CreateCompositeKey(objectType, attributes)
+	endKey := startKey + string(maxUnicodeRuneValue)
+
+	// In case we already query before, we start from the bookmark rather than the startkey
+	if bookmark != "" {
+		startKey = bookmark
+	}
+
+	rs, bookmark, er := stub.DbHandler.QueryDocumentByRange(startKey, endKey, pageSize) //
+	iterator := &AkcQueryIterator{data: rs, currentLoc: 0}
+	queryResponse := &pb.QueryResponseMetadata{FetchedRecordsCount: int32(len(rs)), Bookmark: bookmark}
+	return iterator, queryResponse, er
 }

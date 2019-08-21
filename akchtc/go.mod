@@ -2,13 +2,20 @@ module github.com/Akachain/akc-go-sdk/akchtc
 
 go 1.12
 
+replace github.com/satori/go.uuid v1.2.0 => github.com/satori/go.uuid v1.2.1-0.20181028125025-b2ce2384e17b
+
 require (
+	github.com/Akachain/akc-go-sdk/common v0.0.0-20190815090902-abe4449a216b
+	github.com/Akachain/akc-go-sdk/util v0.0.0-20190815090902-abe4449a216b
 	github.com/fsouza/go-dockerclient v1.4.1 // indirect
 	github.com/golang/protobuf v1.3.2 // indirect
 	github.com/hyperledger/fabric v1.4.1
 	github.com/hyperledger/fabric-amcl v0.0.0-20181230093703-5ccba6eab8d6 // indirect
+	github.com/mitchellh/mapstructure v1.1.2
 	github.com/op/go-logging v0.0.0-20160315200505-970db520ece7 // indirect
+	github.com/satori/go.uuid v1.2.0 // indirect
 	github.com/spf13/viper v1.4.0 // indirect
+	github.com/stretchr/testify v1.3.0
 	github.com/sykesm/zap-logfmt v0.0.2 // indirect
 	golang.org/x/crypto v0.0.0-20190701094942-4def268fd1a4 // indirect
 	golang.org/x/net v0.0.0-20190628185345-da137c7871d7 // indirect

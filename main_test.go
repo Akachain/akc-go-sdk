@@ -54,11 +54,31 @@ func TestPartialQuery(t *testing.T) {
 	val1 := "val1"
 	val2 := "val2"
 
-	for i := 0; i < 10; i++ {
+	// create 0=9 transactions sharing a part of the key "key_{number}"
+	for i := 0; i < 9; i++ {
 		util.MockInvokeTransaction(t, stub, [][]byte{[]byte("CreateData"), []byte(key1), []byte(strconv.Itoa(i)), []byte(val1), []byte(val2)})
 	}
 
-	stub.GetStateByPartialCompositeKey(DATATABLE, []string{key1})
+	// Test GetStateByPartialCompositeKeyWithPagination
+	resultsIterator, queryResponse, _ := stub.GetStateByPartialCompositeKeyWithPagination(DATATABLE, []string{key1}, 5, "")
+
+	i := 0
+	for resultsIterator.HasNext() {
+		resultsIterator.Next()
+		i++
+	}
+
+	assert.Equal(t, i, 5)
+
+	resultsIterator, _, _ = stub.GetStateByPartialCompositeKeyWithPagination(DATATABLE, []string{key1}, 5, queryResponse.GetBookmark())
+
+	i = 0
+	for resultsIterator.HasNext() {
+		resultsIterator.Next()
+		i++
+	}
+
+	assert.Equal(t, i, 4)
 }
 
 func TestSimpleData(t *testing.T) {

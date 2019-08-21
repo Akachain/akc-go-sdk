@@ -18,7 +18,7 @@ import (
 	pb "github.com/hyperledger/fabric/protos/peer"
 	"github.com/mitchellh/mapstructure"
 
-	akc "github.com/Akachain/akc-go-sdk/akc-htc"
+	akc "github.com/Akachain/akc-go-sdk/akchtc"
 )
 
 var logger = shim.NewLogger("example_balance_transfer")

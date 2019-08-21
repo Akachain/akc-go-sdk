@@ -17,4 +17,5 @@ require (
 	github.com/onsi/gomega v1.5.0 // indirect
 	github.com/stretchr/testify v1.3.0
 	github.com/tedsuo/ifrit v0.0.0-20180802180643-bea94bb476cc // indirect
+	golang.org/x/tools/gopls v0.1.3 // indirect
 )
