@@ -2,12 +2,13 @@ package util
 
 import (
 	"errors"
+	"github.com/hyperledger/fabric/common/util"
 	"strings"
 	"unicode/utf8"
 
 	. "github.com/hyperledger/fabric/core/chaincode/shim"
 	pb "github.com/hyperledger/fabric/protos/peer"
-	logging "github.com/op/go-logging"
+	"github.com/op/go-logging"
 )
 
 const (
@@ -24,6 +25,27 @@ type MockStubExtend struct {
 	CouchDB   bool            // if we use couchDB
 	DbHandler *CouchDBHandler // if we use couchDB
 	*MockStub
+
+	// private data collection
+	transient         map[string][]byte          // store tmp private data
+	PrivateDbHandlers map[string]*CouchDBHandler // list private write set
+}
+
+func NewMockStubExtend(stub *MockStub, c Chaincode) *MockStubExtend {
+	s := new(MockStubExtend)
+	s.MockStub = stub
+	s.cc = c
+	s.CouchDB = false
+	return s
+}
+
+func NewMockStubPrivateDataExtend(stub *MockStub, c Chaincode, dbHandlers map[string]*CouchDBHandler) *MockStubExtend {
+	s := new(MockStubExtend)
+	s.MockStub = stub
+	s.cc = c
+	s.transient = make(map[string][]byte)
+	s.PrivateDbHandlers = dbHandlers
+	return s
 }
 
 // GetQueryResult overrides the same function in MockStub
@@ -38,14 +60,6 @@ func (stub *MockStubExtend) GetQueryResult(query string) (StateQueryIteratorInte
 
 	rs := &AkcQueryIterator{data: rawdata, currentLoc: 0}
 	return rs, nil
-}
-
-func NewMockStubExtend(stub *MockStub, c Chaincode) *MockStubExtend {
-	s := new(MockStubExtend)
-	s.MockStub = stub
-	s.cc = c
-	s.CouchDB = false
-	return s
 }
 
 func (stub *MockStubExtend) SetCouchDBConfiguration(handler *CouchDBHandler) {
@@ -239,4 +253,124 @@ func (stub *MockStubExtend) GetStateByPartialCompositeKeyWithPagination(objectTy
 	iterator := &AkcQueryIterator{data: rs, currentLoc: 0}
 	queryResponse := &pb.QueryResponseMetadata{FetchedRecordsCount: int32(len(rs)), Bookmark: bookmark}
 	return iterator, queryResponse, er
+}
+
+// GetTransient return private data from transient store map
+func (stub *MockStubExtend) GetTransient() (map[string][]byte, error) {
+	return stub.transient, nil
+}
+
+// AddTransient adds key-value pairs to transient map
+func (stub *MockStubExtend) AddTransient(transient map[string][]byte) {
+	stub.transient = transient
+}
+
+// PutPrivateData perform save private data as key-value into specified `collection`
+func (stub *MockStubExtend) PutPrivateData(collection string, key string, value []byte) error {
+	handler, err := stub.getPrivateDBHandler(collection)
+	if err != nil {
+		return err
+	}
+
+	// checking update or save new
+	if val, _ := stub.GetPrivateData(collection, key); val != nil {
+		return handler.UpdateDocument(key, value)
+	} else {
+		_, err := handler.SaveDocument(key, value)
+		return err
+	}
+}
+
+// GetPrivateData returns values of the specified `key` from the specified `collection`
+func (stub *MockStubExtend) GetPrivateData(collection, key string) ([]byte, error) {
+	handler, err := stub.getPrivateDBHandler(collection)
+	if err != nil {
+		return nil, err
+	}
+
+	doc, _, err := handler.ReadDocument(key)
+	if doc != nil {
+		return doc.JSONValue, nil
+	}
+
+	return nil, err
+}
+
+// DelPrivateData delete values of the specified `key` from the specified `collection`
+func (stub *MockStubExtend) DelPrivateData(collection, key string) error {
+	handler, err := stub.getPrivateDBHandler(collection)
+	if err != nil {
+		return err
+	}
+
+	return handler.DeleteDocument(key)
+}
+
+// GetPrivateDataByPartialCompositeKey queries the state in a given private
+// collection based on a given partial composite key
+func (stub *MockStubExtend) GetPrivateDataByPartialCompositeKey(collection, objectType string, attributes []string) (StateQueryIteratorInterface, error) {
+	partialCompositeKey, err := stub.CreateCompositeKey(objectType, attributes)
+	if err != nil {
+		return nil, err
+	}
+	startKey := partialCompositeKey
+	endKey := partialCompositeKey + string(maxUnicodeRuneValue)
+
+	return stub.GetPrivateDataByRange(collection, startKey, endKey)
+}
+
+// GetPrivateDataByRange queries couchdb by range in the private data collection
+func (stub *MockStubExtend) GetPrivateDataByRange(collection, startKey, endKey string) (StateQueryIteratorInterface, error) {
+	handler, err := stub.getPrivateDBHandler(collection)
+	if err != nil {
+		return nil, err
+	}
+
+	rs, _, err := handler.QueryDocumentByRange(startKey, endKey, 1000)
+	iterator := &AkcQueryIterator{data: rs, currentLoc: 0}
+
+	return iterator, err
+}
+
+// GetPrivateDataHash returns the hash of the value of the specified `key` from the specified
+// `collection`
+func (stub *MockStubExtend) GetPrivateDataHash(collection, key string) ([]byte, error) {
+	pvtData, err := stub.GetPrivateData(collection, key)
+	if err != nil {
+		return nil, err
+	}
+
+	dataHash := util.ComputeSHA256(pvtData)
+	return dataHash, nil
+}
+
+// GetPrivateDataQueryResult performs a "rich" query against a given private
+// collection. It is only supported for state databases that support rich query,
+// e.g.CouchDB
+func (stub *MockStubExtend) GetPrivateDataQueryResult(collection, query string) (StateQueryIteratorInterface, error) {
+	handler, err := stub.getPrivateDBHandler(collection)
+	if err != nil {
+		return nil, err
+	}
+
+	// Query data from couchDB
+	rawData, err := handler.QueryDocument(query)
+	if err != nil {
+		return nil, err
+	}
+
+	rs := &AkcQueryIterator{data: rawData, currentLoc: 0}
+	return rs, nil
+}
+
+// getPrivateDBHandler return database handler of the specified `collection`
+func (stub *MockStubExtend) getPrivateDBHandler(collection string) (*CouchDBHandler, error) {
+	h, ok := stub.PrivateDbHandlers[collection]
+	if !ok {
+		err := errors.New("invalid private data collection")
+		mockLogger.Error(err)
+		return nil, err
+	}
+
+	return h, nil
 }

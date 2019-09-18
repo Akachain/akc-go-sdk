@@ -278,3 +278,15 @@ func genTxID() string {
 	txId := fmt.Sprintf("%s", uid)
 	return txId
 }
+
+// MockInvokePrivateTransaction creates a mock invoke transaction have private data using MockStubExtend
+func MockInvokePrivateTransaction(t *testing.T, stub *MockStubExtend, args [][]byte, transient map[string][]byte) string {
+	txId := genTxID()
+	stub.AddTransient(transient)
+	res := stub.MockInvoke(txId, args)
+	if res.Status != shim.OK {
+		return string(res.Message)
+	}
+	// fmt.Println(res.Payload)
+	return string(res.Payload)
+}
