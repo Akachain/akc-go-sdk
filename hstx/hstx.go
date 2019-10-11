@@ -2,120 +2,108 @@ package main
 
 import (
 	"fmt"
+	"reflect"
+	"strings"
 
-	. "github.com/Akachain/akc-go-sdk/common"
-	ctl "github.com/Akachain/akc-go-sdk/hstx/controllers"
+	"github.com/Akachain/akc-go-sdk/common"
+	hdl "github.com/Akachain/akc-go-sdk/hstx/handler"
 	"github.com/hyperledger/fabric/core/chaincode/shim"
 	pb "github.com/hyperledger/fabric/protos/peer"
 )
 
-// Chaincode implementation
+// Chaincode struct
 type Chaincode struct {
 }
 
-var controller_admin ctl.Admin
-var controller_proposal ctl.Proposal
-var controller_quorum ctl.Quorum
-var controller_commit ctl.Commit
+var handler = new(hdl.Handler)
 
-/*
- * The Init method is called when the Chain code" is instantiated by the blockchain network
- */
+// Init method is called when the Chain code" is instantiated by the blockchain network
 func (s *Chaincode) Init(stub shim.ChaincodeStubInterface) pb.Response {
-	// The invokeFunction returns
-	// Admin1 := "Admin1"
-	// pubKey1, _ := ioutil.ReadFile("./sample/pk1.pem")
-	// pk1 := base64.StdEncoding.EncodeToString(pubKey1)
-
-	// Admin2 := "Admin2"
-	// pubKey2, _ := ioutil.ReadFile("./sample/pk2.pem")
-	// pk2 := base64.StdEncoding.EncodeToString(pubKey2)
-
-	// Admin3 := "Admin3"
-	// pubKey3, _ := ioutil.ReadFile("./sample/pk3.pem")
-	// pk3 := base64.StdEncoding.EncodeToString(pubKey3)
-
-	// rs1 := controller_admin.CreateAdmin(stub, []string{Admin1, pk1})
-	// rs2 := controller_admin.CreateAdmin(stub, []string{Admin2, pk2})
-	// rs3 := controller_admin.CreateAdmin(stub, []string{Admin3, pk3})
-
-	// if rs1.Status != shim.OK || rs2.Status != shim.OK || rs3.Status != shim.OK {
-	// 	return shim.Error("Init chaincode with 3 admin fail")
-	// }
 	return shim.Success(nil)
 }
 
-/*
- * The Invoke method is called as a result of an application request to run the chain code
- * The calling application program has also specified the particular smart contract function to be called, with arguments
- */
-func (t *Chaincode) Invoke(stub shim.ChaincodeStubInterface) pb.Response {
-	Logger.Info("########### Hstx Invoke ###########")
+// Invoke method is called as a result of an application request to run the chain code
+// The calling application program has also specified the particular smart contract function to be called, with arguments
+func (s *Chaincode) Invoke(stub shim.ChaincodeStubInterface) pb.Response {
+	common.Logger.Info("########### Hstx Invoke ###########")
+
+	handler.InitHandler()
+
 	// Retrieve the requested Smart Contract function and arguments
 	function, args := stub.GetFunctionAndParameters()
-	switch function {
-	//CreateAdmin
-	case "CreateAdmin":
-		return controller_admin.CreateAdmin(stub, args)
-	//UpdateAdmin -> For testing
-	case "UpdateAdmin":
-		return controller_admin.UpdateAdmin(stub, args)
-	//CreateProposal
-	case "CreateProposal":
-		return controller_proposal.CreateProposal(stub, args)
-	//CreateQuorum
-	case "CreateQuorum":
-		return controller_quorum.CreateQuorum(stub, args)
-	//CreateReject
-	case "CreateReject":
-		return controller_quorum.CreateReject(stub, args)
-	//CreateCommit
-	case "CreateCommit":
-		return controller_commit.CreateCommit(stub, args)
-	default:
-		return t.Query(stub)
+
+	router := map[string]interface{}{
+		"CreateSuperAdmin": handler.SuperAdminHanler.CreateSuperAdmin,
+		"UpdateSuperAdmin": handler.SuperAdminHanler.UpdateSuperAdmin,
+
+		"CreateAdmin": handler.AdminHanler.CreateAdmin,
+		"UpdateAdmin": handler.AdminHanler.UpdateAdmin,
+
+		"CreateProposal": handler.ProposalHanler.CreateProposal,
+		"UpdateProposal": handler.ProposalHanler.UpdateProposal,
+
+		"CreateApproval": handler.ApprovalHanler.CreateApproval,
+		"UpdateApproval": handler.ApprovalHanler.UpdateApproval,
 	}
+
+	routerType := "invoke"
+	return s.route(routerType, router, function, stub, args)
 }
 
 // Query callback representing the query of a chaincode
-func (t *Chaincode) Query(stub shim.ChaincodeStubInterface) pb.Response {
-	Logger.Info("########### Hstx Query ###########")
+func (s *Chaincode) Query(stub shim.ChaincodeStubInterface) pb.Response {
+	common.Logger.Info("########### Hstx Query ###########")
+
+	// Retrieve the requested Smart Contract function and arguments
 	function, args := stub.GetFunctionAndParameters()
 
-	switch function {
-	// GetAdminByID
-	case "GetAdminByID":
-		return controller_admin.GetAdminByID(stub, args)
-	// GetAllAdmin
-	case "GetAllAdmin":
-		return controller_admin.GetAllAdmin(stub)
-	// GetProposalByID
-	case "GetProposalByID":
-		return controller_proposal.GetProposalByID(stub, args)
-	// GetProposalNotSign
-	case "GetProposalNotSign":
-		return controller_proposal.GetProposalNotSign(stub, args)
-	// GetAllProposal
-	case "GetAllProposal":
-		return controller_proposal.GetAllProposal(stub)
-	// GetQuorumByID
-	case "GetQuorumByID":
-		return controller_quorum.GetQuorumByID(stub, args)
-	// GetQuorumByProposalID
-	case "GetQuorumByProposalID":
-		return controller_quorum.GetQuorumByProposalID(stub, args)
-	// GetAllQuorum
-	case "GetAllQuorum":
-		return controller_quorum.GetAllQuorum(stub)
-	// GetCommitByID
-	case "GetCommitByID":
-		return controller_commit.GetCommitByID(stub, args)
-	// GetAllCommit
-	case "GetAllCommit":
-		return controller_commit.GetAllCommit(stub)
+	router := map[string]interface{}{
+		"GetAllSuperAdmin":  handler.SuperAdminHanler.GetAllSuperAdmin,
+		"GetSuperAdminByID": handler.SuperAdminHanler.GetSuperAdminByID,
+
+		"GetAllAdmin":  handler.AdminHanler.GetAllAdmin,
+		"GetAdminByID": handler.AdminHanler.GetAdminByID,
+
+		"GetAllProposal":  handler.ProposalHanler.GetAllProposal,
+		"GetProposalByID": handler.ProposalHanler.GetProposalByID,
+
+		"GetAllApproval":  handler.ApprovalHanler.GetAllApproval,
+		"GetApprovalByID": handler.ApprovalHanler.GetApprovalByID,
 	}
 
-	return shim.Error(fmt.Sprintf("[Hstx Chaincode] Invoke and Query not find function " + function))
+	routerType := "query"
+	return s.route(routerType, router, function, stub, args)
+}
+
+// route func to route the funcName to a hanler's function correspondingly
+func (s *Chaincode) route(routerType string, router map[string]interface{}, funcName string, params ...interface{}) pb.Response {
+	if router[funcName] == nil {
+		if strings.Compare(routerType, "invoke") == 0 {
+			return s.Query(params[0].(shim.ChaincodeStubInterface))
+		}
+		return shim.Error(fmt.Sprintf("[Hstx Chaincode] Invoke not find function " + funcName))
+	}
+
+	function := reflect.ValueOf(router[funcName])
+	if !function.IsValid() {
+		return shim.Error(fmt.Sprintf("Map function is invalid."))
+	}
+
+	if len(params) != function.Type().NumIn() {
+		return shim.Error(fmt.Sprintf("The number of params is not adapted."))
+	}
+
+	paramsValue := make([]reflect.Value, len(params))
+	for i, param := range params {
+		paramsValue[i] = reflect.ValueOf(param)
+	}
+
+	funcResult := reflect.MakeFunc(reflect.TypeOf(router[funcName]), func(paramsValue []reflect.Value) []reflect.Value {
+		return function.Call(paramsValue)
+	})
+
+	f := funcResult.Interface().(func(shim.ChaincodeStubInterface, []string) pb.Response)
+	return f(params[0].(shim.ChaincodeStubInterface), params[1].([]string))
 }
 
 // The main function is only relevant in unit test mode. Only included here for completeness.
