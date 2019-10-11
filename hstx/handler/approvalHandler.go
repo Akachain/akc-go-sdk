@@ -4,6 +4,7 @@ import (
 	"crypto/ecdsa"
 	"crypto/sha256"
 	"crypto/x509"
+	"encoding/base64"
 	"encoding/json"
 	"encoding/pem"
 	"errors"
@@ -180,9 +181,10 @@ func (sah *ApprovalHanler) verifySignature(stub shim.ChaincodeStubInterface, app
 	mapstructure.Decode(rawSuperAdmin, superAdmin)
 
 	// Start verify
-	pkBlock, _ := pem.Decode([]byte(superAdmin.PublicKey))
+	pkBytes := []byte(superAdmin.PublicKey)
+	pkBlock, _ := pem.Decode(pkBytes)
 	if pkBlock == nil {
-		return errors.New("Can't decode cert")
+		return errors.New("Can't decode public key")
 	}
 
 	rawPk, err := x509.ParsePKIXPublicKey(pkBlock.Bytes)
@@ -193,7 +195,10 @@ func (sah *ApprovalHanler) verifySignature(stub shim.ChaincodeStubInterface, app
 	pk := rawPk.(*ecdsa.PublicKey)
 
 	// SIGNATURE
-	signaturebyte := []byte(signature)
+	signaturebyte, err := base64.StdEncoding.DecodeString(signature)
+	if err != nil {
+		return err
+	}
 
 	R, S, err := utils.UnmarshalECDSASignature(signaturebyte)
 	if err != nil {
@@ -201,8 +206,10 @@ func (sah *ApprovalHanler) verifySignature(stub shim.ChaincodeStubInterface, app
 	}
 
 	// DATA
-	dataByte := []byte(message)
-	// fmt.Printf("\ndata:\n%v\n", dataByte)
+	dataByte, err := base64.StdEncoding.DecodeString(message)
+	if err != nil {
+		return err
+	}
 
 	hash := sha256.Sum256(dataByte)
 	var hashData = hash[:]
