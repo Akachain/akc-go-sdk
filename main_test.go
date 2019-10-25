@@ -48,9 +48,34 @@ func setupMock() *util.MockStubExtend {
 	return stub
 }
 
+func TestUpdateData(t *testing.T) {
+	stub := setupMock()
+	key1 := "key1"
+	key2 := "key2"
+	val1 := "val1"
+	val2 := "val2"
+
+	util.MockInvokeTransaction(t, stub, [][]byte{[]byte("CreateData"), []byte(key1), []byte(key2), []byte("val0"), []byte("val0")})
+
+	util.MockInvokeTransaction(t, stub, [][]byte{[]byte("UpdateData"), []byte(key1), []byte(key2), []byte(val1), []byte(val2)})
+
+	// Check if the created data exist in the ledger
+	compositeKey, _ := stub.CreateCompositeKey(DATATABLE, []string{key1, key2})
+	state, _ := stub.GetState(compositeKey)
+	var ad [10]Data
+
+	json.Unmarshal([]byte(state), &ad[0])
+
+	// Check if the created data information is correct
+	assert.Equal(t, key1, ad[0].Key1)
+	assert.Equal(t, key2, ad[0].Key2)
+	assert.Equal(t, val1, ad[0].Attribute1)
+	assert.Equal(t, val2, ad[0].Attribute2)
+}
+
 func TestPartialQuery(t *testing.T) {
 	stub := setupMock()
-	key1 := "key"
+	key1 := "key1"
 	val1 := "val1"
 	val2 := "val2"
 

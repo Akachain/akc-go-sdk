@@ -20,6 +20,14 @@ func Changeinfo(stub shim.ChaincodeStubInterface, TableModel string, row_key []s
 	return err
 }
 
+// UpdateExistingData works similar to Changeinfo.
+// However, it does not check if the document is already existed
+// This is useful if we already query out the row before and do not want to query again.
+func UpdateExistingData(stub shim.ChaincodeStubInterface, TableModel string, row_key []string, data interface{}) error {
+	err := UpdateTableRow(stub, TableModel, row_key, data)
+	return err
+}
+
 //create data
 func Createdata(stub shim.ChaincodeStubInterface, TableModel string, row_key []string, data interface{}) error {
 	var old_data interface{}

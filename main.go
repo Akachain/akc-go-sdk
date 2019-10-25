@@ -42,6 +42,8 @@ func (s *Chaincode) Invoke(stub shim.ChaincodeStubInterface) pb.Response {
 	//CreateAdmin
 	case "CreateData":
 		return createData(stub, args)
+	case "UpdateData":
+		return updateData(stub, args)
 	}
 	return shim.Error(fmt.Sprintf("Invoke cannot find function " + function))
 }
@@ -53,6 +55,21 @@ func createData(stub shim.ChaincodeStubInterface, args []string) pb.Response {
 	val2 := args[3]
 
 	err := util.Createdata(stub, DATATABLE, []string{key1, key2}, &Data{Key1: key1, Key2: key2, Attribute1: val1, Attribute2: val2})
+	if err != nil {
+		resErr := ResponseError{ResCode: ERR5, Msg: ""}
+		return RespondError(resErr)
+	}
+	resSuc := ResponseSuccess{ResCode: SUCCESS, Msg: ResCodeDict[SUCCESS], Payload: ""}
+	return RespondSuccess(resSuc)
+}
+
+func updateData(stub shim.ChaincodeStubInterface, args []string) pb.Response {
+	key1 := args[0]
+	key2 := args[1]
+	val1 := args[2]
+	val2 := args[3]
+
+	err := util.UpdateExistingData(stub, DATATABLE, []string{key1, key2}, &Data{Key1: key1, Key2: key2, Attribute1: val1, Attribute2: val2})
 	if err != nil {
 		resErr := ResponseError{ResCode: ERR5, Msg: ""}
 		return RespondError(resErr)

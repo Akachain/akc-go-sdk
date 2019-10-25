@@ -204,6 +204,47 @@ func InsertTableRow(
 	return
 }
 
+// UpdateTableRow is similar to InsertTableRow without re-checking if the row is already exist
+func UpdateTableRow(
+	stub shim.ChaincodeStubInterface,
+	table_name string,
+	row_keys []string,
+	new_row_value interface{},
+) (err error) {
+	err = nil
+
+	// Check that new_row_value is valid (must be specified)
+	if InterfaceIsNilOrIsZeroOfUnderlyingType(new_row_value) {
+		err = fmt.Errorf("InsertTableRow failed because new_row_value was nil")
+		return
+	}
+
+	// Form the composite key that will index this table row in the ledger state key/value store.
+	compositeKey, err := stub.CreateCompositeKey(table_name, row_keys)
+	if err != nil {
+		err = fmt.Errorf("GetTableRow failed because stub.CreateCompositeKey failed with error %v", err)
+		return
+	}
+
+	// Serialize Member struct as JSON
+	bytes, err := json.Marshal(new_row_value)
+	if err != nil {
+		err = fmt.Errorf("InsertTableRow failed because json.Marshal failed with error %v", err)
+		return
+	}
+
+	// Store the data in the ledger state
+	err = stub.PutState(compositeKey, bytes)
+	if err != nil {
+		err = fmt.Errorf("InsertTableRow failed because stub.PutState(%v) failed with error %v", compositeKey, err)
+		return
+	}
+
+	// Return with success.
+	err = nil
+	return
+}
+
 // If old_row_value is not nil, then the table row will be unmarshaled into old_row_value before being deleted.
 func DeleteTableRow(
 	stub shim.ChaincodeStubInterface,
