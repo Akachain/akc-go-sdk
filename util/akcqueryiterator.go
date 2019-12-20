@@ -2,9 +2,9 @@ package util
 
 import (
 	"errors"
-
 	. "github.com/hyperledger/fabric/core/chaincode/shim"
-	couchdb "github.com/hyperledger/fabric/core/ledger/util/couchdb"
+	"github.com/hyperledger/fabric/core/ledger/kvledger/txmgmt/statedb"
+	"github.com/hyperledger/fabric/core/ledger/util/couchdb"
 	"github.com/hyperledger/fabric/protos/ledger/queryresult"
 )
 
@@ -23,14 +23,14 @@ func (it *AkcQueryIterator) Next() (*queryresult.KV, error) {
 	var kv = new(queryresult.KV)
 
 	if !it.HasNext() {
-		return nil, errors.New("There is no other item in the iterator")
+		return nil, errors.New("there is no other item in the iterator")
 	}
 
 	item := it.data[it.currentLoc]
 	it.currentLoc++
 
 	if item == nil {
-		return nil, errors.New("Empty query result")
+		return nil, errors.New("empty query result")
 	}
 
 	kv.Value = item.Value
@@ -38,6 +38,38 @@ func (it *AkcQueryIterator) Next() (*queryresult.KV, error) {
 	return kv, nil
 }
 
-func (iter *AkcQueryIterator) Close() error {
+func (it *AkcQueryIterator) Close() error {
 	return nil
+}
+
+// FromResultsIterator provides a way of converting ResultsIterator into StateQueryIterator
+func FromResultsIterator(rit statedb.ResultsIterator) (*AkcQueryIterator, error) {
+	// Init the result iterator
+	rawData := make([]*couchdb.QueryResult, 0)
+	iterator := &AkcQueryIterator{data: rawData, currentLoc: 0}
+
+	// Fill it with raw data
+	for {
+		member, er := rit.Next()
+
+		if er != nil {
+			return nil, er
+		}
+
+		// no more member
+		if member == nil {
+			break
+		}
+
+		// convert VersionedKV to QueryResult
+		z := member.(*statedb.VersionedKV)
+		r := new(couchdb.QueryResult)
+		r.ID = z.Key
+		r.Value = z.Value
+		rawData = append(rawData, r)
+	}
+
+	iterator.data = rawData
+	iterator.currentLoc = 0
+	return iterator, nil
 }

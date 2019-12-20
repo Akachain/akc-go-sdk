@@ -2,12 +2,15 @@ package util
 
 import (
 	"errors"
+	"fmt"
 	"strings"
 	"unicode/utf8"
 
 	. "github.com/hyperledger/fabric/core/chaincode/shim"
 	pb "github.com/hyperledger/fabric/protos/peer"
+
 	logging "github.com/op/go-logging"
+	viper "github.com/spf13/viper"
 )
 
 const (
@@ -30,30 +33,53 @@ type MockStubExtend struct {
 // that did not implement anything.
 func (stub *MockStubExtend) GetQueryResult(query string) (StateQueryIteratorInterface, error) {
 	// Query data from couchDB
-	rawdata, error := stub.DbHandler.QueryDocument(query)
-
+	raw, error := stub.DbHandler.QueryDocument(query)
 	if error != nil {
 		return nil, error
 	}
-
-	rs := &AkcQueryIterator{data: rawdata, currentLoc: 0}
-	return rs, nil
+	return FromResultsIterator(raw)
 }
 
+// GetQueryResultWithPagination overrides the same function in MockStub
+// that did not implement anything.
+func (stub *MockStubExtend) GetQueryResultWithPagination(query string, pageSize int32,
+	bookmark string) (StateQueryIteratorInterface, *pb.QueryResponseMetadata, error) {
+	// Query data from couchDB
+	//rawdata, error := stub.DbHandler.QueryDocument(query)
+	//	//
+	//	//if error != nil {
+	//	//	return nil, nil, error
+	//	//}
+	//	//
+	//	//rs := &AkcQueryIterator{data: rawdata, currentLoc: 0}
+	//	//metadata := &pb.QueryResponseMetadata{FetchedRecordsCount: int32(len(rawdata)), Bookmark: bookmark}
+	//	//
+	//	//return rs, metadata, nil
+	return nil, nil, nil
+}
+
+// NewMockStubExtend constructor
 func NewMockStubExtend(stub *MockStub, c Chaincode) *MockStubExtend {
 	s := new(MockStubExtend)
 	s.MockStub = stub
 	s.cc = c
 	s.CouchDB = false
+	viper.SetConfigName("core")
+	viper.AddConfigPath(".")
+	err := viper.ReadInConfig() // Find and read the config file
+	if err != nil {             // Handle errors reading the config file
+		panic(fmt.Errorf("Fatal error config file: %s", err))
+	}
 	return s
 }
 
+// SetCouchDBConfiguration sets the couchdb configuration with appropriate database handler
 func (stub *MockStubExtend) SetCouchDBConfiguration(handler *CouchDBHandler) {
 	stub.CouchDB = true
 	stub.DbHandler = handler
 }
 
-// Override this function from MockStub
+// MockInvoke Override this function from MockStub
 func (stub *MockStubExtend) MockInvoke(uuid string, args [][]byte) pb.Response {
 	stub.args = args
 	stub.MockTransactionStart(uuid)
@@ -62,7 +88,7 @@ func (stub *MockStubExtend) MockInvoke(uuid string, args [][]byte) pb.Response {
 	return res
 }
 
-// Override this function from MockStub
+// MockInit Override this function from MockStub
 func (stub *MockStubExtend) MockInit(uuid string, args [][]byte) pb.Response {
 	stub.args = args
 	stub.MockTransactionStart(uuid)
@@ -71,7 +97,7 @@ func (stub *MockStubExtend) MockInit(uuid string, args [][]byte) pb.Response {
 	return res
 }
 
-// Override this function from MockStub
+// GetFunctionAndParameters Override this function from MockStub
 func (stub *MockStubExtend) GetFunctionAndParameters() (function string, params []string) {
 	allargs := stub.GetStringArgs()
 	function = ""
@@ -100,7 +126,7 @@ func (stub *MockStubExtend) PutState(key string, value []byte) error {
 		val, _ := stub.GetState(key)
 		if val != nil {
 			// Document exist, must update instead of create new
-			stub.DbHandler.UpdateDocument(key, value)
+			stub.DbHandler.SaveDocument(key, value)
 		} else {
 			stub.DbHandler.SaveDocument(key, value)
 		}
@@ -115,11 +141,7 @@ func (stub *MockStubExtend) PutState(key string, value []byte) error {
 func (stub *MockStubExtend) GetState(key string) ([]byte, error) {
 	// In case we are using CouchDB, we store the value document in the database
 	if stub.CouchDB {
-		doc, _, er := stub.DbHandler.ReadDocument(key)
-		if doc != nil {
-			return doc.JSONValue, nil
-		}
-		return nil, er
+		return stub.DbHandler.ReadDocument(key)
 	}
 
 	// Else we can just carry on
@@ -134,24 +156,24 @@ func (stub *MockStubExtend) GetStateOriginal(key string) ([]byte, error) {
 }
 
 // DelState writes the specified `value` and `key` into the ledger.
-func (stub *MockStubExtend) DelState(key string) error {
-
-	// In case we are using CouchDB, we store the value document in the database
-	if stub.CouchDB {
-		val, _ := stub.GetState(key)
-		if val != nil {
-			// Document exist, must update instead of create new
-			stub.DbHandler.DeleteDocument(key)
-		} else {
-			return errors.New("key does not exist")
-		}
-	}
-
-	// Carry on
-	stub.DelStateOriginal(key)
-
-	return nil
-}
+//func (stub *MockStubExtend) DelState(key string) error {
+//
+//	// In case we are using CouchDB, we store the value document in the database
+//	if stub.CouchDB {
+//		val, _ := stub.GetState(key)
+//		if val != nil {
+//			// Document exist, must update instead of create new
+//			stub.DbHandler.DeleteDocument(key)
+//		} else {
+//			return errors.New("key does not exist")
+//		}
+//	}
+//
+//	// Carry on
+//	stub.DelStateOriginal(key)
+//
+//	return nil
+//}
 
 // DelStateOriginal is copied from mockstub as we still need to carry on normal delState operation with the mock ledger map
 func (stub *MockStubExtend) DelStateOriginal(key string) error {
@@ -226,17 +248,17 @@ func (stub *MockStubExtend) GetStateByPartialCompositeKey(objectType string, att
 }
 
 // GetStateByPartialCompositeKeyWithPagination queries couchdb with a partial compositekey and pagination information
-func (stub *MockStubExtend) GetStateByPartialCompositeKeyWithPagination(objectType string, attributes []string, pageSize int32, bookmark string) (StateQueryIteratorInterface, *pb.QueryResponseMetadata, error) {
-	startKey, _ := stub.CreateCompositeKey(objectType, attributes)
-	endKey := startKey + string(maxUnicodeRuneValue)
-
-	// In case we already query before, we start from the bookmark rather than the startkey
-	if bookmark != "" {
-		startKey = bookmark
-	}
-
-	rs, bookmark, er := stub.DbHandler.QueryDocumentByRange(startKey, endKey, pageSize) //
-	iterator := &AkcQueryIterator{data: rs, currentLoc: 0}
-	queryResponse := &pb.QueryResponseMetadata{FetchedRecordsCount: int32(len(rs)), Bookmark: bookmark}
-	return iterator, queryResponse, er
-}
+//func (stub *MockStubExtend) GetStateByPartialCompositeKeyWithPagination(objectType string, attributes []string, pageSize int32, bookmark string) (StateQueryIteratorInterface, *pb.QueryResponseMetadata, error) {
+//	startKey, _ := stub.CreateCompositeKey(objectType, attributes)
+//	endKey := startKey + string(maxUnicodeRuneValue)
+//
+//	// In case we already query before, we start from the bookmark rather than the startkey
+//	if bookmark != "" {
+//		startKey = bookmark
+//	}
+//
+//	rs, bookmark, er := stub.DbHandler.QueryDocumentByRange(startKey, endKey, pageSize) //
+//	iterator := &AkcQueryIterator{data: rs, currentLoc: 0}
+//	queryResponse := &pb.QueryResponseMetadata{FetchedRecordsCount: int32(len(rs)), Bookmark: bookmark}
+//	return iterator, queryResponse, er
+//}

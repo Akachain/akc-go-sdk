@@ -2,48 +2,21 @@ package main
 
 import (
 	"encoding/json"
-	"os"
 	"strconv"
 	"testing"
 
-	"github.com/Akachain/akc-go-sdk/util"
+	"akc-go-sdk/util"
 	"github.com/hyperledger/fabric/core/chaincode/shim"
 	"github.com/stretchr/testify/assert"
 )
 
-type testConfig struct {
-	DbURL  string `json:"TEST_COUCHDB_URL"`
-	DbName string `json:"TEST_DATABASE_NAME"`
-}
-
-func getTestConfig(fileName string) (testConfig, error) {
-	// fileName is the path to the json config file
-	file, err := os.Open(fileName)
-	var cfg testConfig
-	if err != nil {
-		return cfg, err
-	}
-
-	// decode to get config
-	decoder := json.NewDecoder(file)
-	err = decoder.Decode(&cfg)
-	if err != nil {
-		return cfg, err
-	}
-
-	return cfg, nil
-}
-
 func setupMock() *util.MockStubExtend {
-	// Fetch test configuration
-	cfg, _ := getTestConfig("config.json")
-
-	// Initialize mockstubextend
+	// Initialize MockStubExtend
 	cc := new(Chaincode)
 	stub := util.NewMockStubExtend(shim.NewMockStub("sample", cc), cc)
 
 	// Create a new database, Drop old database
-	db, _ := util.NewCouchDBHandlerWithConnection(cfg.DbName, true, cfg.DbURL)
+	db, _ := util.NewCouchDBHandlerWithConnectionAuthentication(true)
 	stub.SetCouchDBConfiguration(db)
 	return stub
 }
@@ -133,7 +106,14 @@ func TestSimpleData(t *testing.T) {
 	// Test query string
 	util.MockInvokeTransaction(t, stub, [][]byte{[]byte("CreateData"), []byte(key3), []byte(key4), []byte(val1), []byte(val2)})
 
-	queryString := "{\"selector\": {\"_id\": {\"$regex\": \"Data_\"}}}"
+	// Prepare query string
+	var queryString = `
+	{ "selector": 
+		{ 	
+			"_id": 
+				{"$gt": "\u0000Data_"}			
+		}
+	}`
 	resultsIterator, _ := stub.GetQueryResult(queryString)
 
 	i := 0
@@ -150,4 +130,30 @@ func TestSimpleData(t *testing.T) {
 	assert.Equal(t, val2, ad[0].Attribute2)
 	assert.Equal(t, key3, ad[1].Key1)
 	assert.Equal(t, key4, ad[1].Key2)
+}
+
+func TestGetQueryResultWithPagination(t *testing.T) {
+	stub := setupMock()
+	keyPrefix := "key"
+	valPrefix := "val"
+
+	// Create 0-9 states with format "key_{number}" "val_{number}"
+	for i := 0; i < 9; i++ {
+		util.MockInvokeTransaction(t, stub, [][]byte{[]byte("CreateData"), []byte(keyPrefix), []byte(strconv.Itoa(i)), []byte(valPrefix), []byte(strconv.Itoa(i))})
+	}
+
+	// Prepare query string
+	var queryString = `
+	{ "selector": 
+		{ 	
+			"_id": 
+				{"$gt": "\u0000Data_\u0000key"}			
+		}
+	}`
+
+	// fetch the first page with only 5
+	var pageSize int32
+	pageSize = 5
+	_, queryResponse, _ := stub.GetQueryResultWithPagination(queryString, pageSize, "")
+	assert.Equal(t, queryResponse.GetFetchedRecordsCount(), 5)
 }

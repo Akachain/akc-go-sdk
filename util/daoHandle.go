@@ -4,7 +4,7 @@ import (
 	"encoding/json"
 	"fmt"
 
-	"github.com/Akachain/akc-go-sdk/common"
+	"akc-go-sdk/common"
 
 	"github.com/hyperledger/fabric/core/chaincode/shim"
 	pb "github.com/hyperledger/fabric/protos/peer"
@@ -143,6 +143,7 @@ func GetAllData(stub shim.ChaincodeStubInterface, data interface{}, ModelTable s
 		resErr := common.ResponseError{common.ERR4, fmt.Sprintf("%s %s %s", common.ResCodeDict[common.ERR4], err.Error(), common.GetLine())}
 		return common.RespondError(resErr)
 	}
+
 	for row_json_bytes := range datalbytes {
 
 		err := json.Unmarshal(row_json_bytes, data)
@@ -166,11 +167,13 @@ func GetAllData(stub shim.ChaincodeStubInterface, data interface{}, ModelTable s
 		}
 		Datalist = append(Datalist, temp)
 	}
-	if err != nil {
-		//Get data eror
-		resErr := common.ResponseError{common.ERR3, common.ResCodeDict[common.ERR3]}
-		return common.RespondError(resErr)
-	}
+
+	//if err != nil {
+	//	//Get data eror
+	//	resErr := common.ResponseError{common.ERR3, common.ResCodeDict[common.ERR3]}
+	//	return common.RespondError(resErr)
+	//}
+
 	fmt.Printf("Datalist: %v\n", Datalist)
 	dataJson, err2 := json.Marshal(Datalist)
 	if err2 != nil {
