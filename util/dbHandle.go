@@ -2,96 +2,140 @@ package util
 
 import (
 	"encoding/json"
-	"time"
-
 	"github.com/hyperledger/fabric/common/metrics/disabled"
-	couchdb "github.com/hyperledger/fabric/core/ledger/util/couchdb"
+	"github.com/hyperledger/fabric/core/ledger/kvledger/txmgmt/statedb"
+	"github.com/hyperledger/fabric/core/ledger/kvledger/txmgmt/statedb/statecouchdb"
+	"github.com/hyperledger/fabric/core/ledger/kvledger/txmgmt/version"
+	"github.com/hyperledger/fabric/core/ledger/util/couchdb"
 )
 
 const (
 	// DefaultBaseURL is the default address of CouchDB server.
 	DefaultBaseURL = "localhost:5984"
+
+	// The couchDB test will have this name: DefaultChannelName_DefaultNamespace
+	DefaultChannelName   = "channel"   // Fabric channel
+	DefaultChaincodeName = "chaincode" // Fabric chaincode
 )
 
+// CouchDBHandler holds 1 parameter:
+// dbEngine: a VersionedDB object that is used by the chaincode to query.
+// This is to guarantee that the test uses the same logic in interaction with stateDB as the chaincode.
+// This also includes how chaincode builds its query to interact with the stateDB.
 type CouchDBHandler struct {
-	CouchDatabase *couchdb.CouchDatabase
+	dbEngine *statecouchdb.VersionedDB
 }
 
-// NewCouchDBHandlerWithConnection returns a new CouchDBHandler and setup database for testing
-func NewCouchDBHandlerWithConnection(dbName string, isDrop bool, connectionString string) (*CouchDBHandler, error) {
-	handler := new(CouchDBHandler)
-
-	//Create a couchdb instance
-	couchDBInstance, er := couchdb.CreateCouchInstance(connectionString, "", "", 3, 10, time.Second*30, true, &disabled.Provider{})
-	if er != nil {
-		return nil, er
-	}
-
-	//Create a couchdatabase
-	db := couchdb.CouchDatabase{CouchInstance: couchDBInstance, DBName: dbName}
+// NewCouchDBHandlerWithConnectionAuthentication returns a new CouchDBHandler and setup database for testing
+func NewCouchDBHandlerWithConnectionAuthentication(isDrop bool) (*CouchDBHandler, error) {
+	// Sometimes we'll have to drop the database to clean all previous test
 	if isDrop == true {
-		db.DropDatabase()
+		cleanUp()
 	}
 
-	er = db.CreateDatabaseIfNotExist()
-	if er != nil {
-		return nil, er
-	}
+	// Create a new dbEngine for the channel
+	handler := new(CouchDBHandler)
+	couchState, _ := statecouchdb.NewVersionedDBProvider(&disabled.Provider{})
 
-	handler.CouchDatabase = &db
+	// This step creates a redundant meta database with name channel_ ,
+	// there should be some ways to prevent this. We leave it for now
+	h, err := couchState.GetDBHandle(DefaultChannelName)
+	if err != nil {
+		return nil, err
+	}
+	handler.dbEngine = h.(*statecouchdb.VersionedDB)
 	return handler, nil
 }
 
-// NewCouchDBHandler returns a new CouchDBHandler and setup database for testing
+func cleanUp() error {
+	// statedb.VersionedDB does not publish its couchDB object
+	// Thus, we'll have to recreate
+	couchDBDef := couchdb.GetCouchDBDefinition()
+	ins, er := couchdb.CreateCouchInstance(couchDBDef.URL, couchDBDef.Username, couchDBDef.Password,
+		couchDBDef.MaxRetries, couchDBDef.MaxRetriesOnStartup, couchDBDef.RequestTimeout, couchDBDef.CreateGlobalChangesDB, &disabled.Provider{})
+	if er != nil {
+		return er
+	}
+	dbName := couchdb.ConstructNamespaceDBName(DefaultChannelName, DefaultChaincodeName)
+	db := couchdb.CouchDatabase{CouchInstance: ins, DBName: dbName}
+	_, er = db.DropDatabase()
+	return er
+}
+
+// NewCouchDBHandlerWithConnection that is compatibles with previous release
+func NewCouchDBHandlerWithConnection(dbName string, isDrop bool, connectionString string) (*CouchDBHandler, error) {
+	return NewCouchDBHandlerWithConnectionAuthentication(isDrop)
+}
+
+// NewCouchDBHandler that is compatibles with previous release
 func NewCouchDBHandler(dbName string, isDrop bool) (*CouchDBHandler, error) {
 	return NewCouchDBHandlerWithConnection(dbName, isDrop, DefaultBaseURL)
 }
 
 // SaveDocument stores a value in couchDB
-func (handler *CouchDBHandler) SaveDocument(key string, value []byte) (string, error) {
+func (handler *CouchDBHandler) SaveDocument(key string, value []byte) error {
 	// unmarshal the value param
 	var doc map[string]interface{}
 	json.Unmarshal(value, &doc)
 
 	// Save the doc in database
-	rev, err := handler.CouchDatabase.SaveDoc(key, "", &couchdb.CouchDoc{JSONValue: value, Attachments: nil})
-	return rev, err
-}
+	batch := statedb.NewUpdateBatch()
+	batch.Put(DefaultChaincodeName, key, value, version.NewHeight(1, 1))
+	savePoint := version.NewHeight(1, 2)
+	err := handler.dbEngine.ApplyUpdates(batch, savePoint)
 
-// UpdateDocument update a value in couchDB
-func (handler *CouchDBHandler) UpdateDocument(key string, value []byte) error {
-	// unmarshal the value param
-	var doc map[string]interface{}
-	json.Unmarshal(value, &doc)
-
-	_, rev, _ := handler.CouchDatabase.ReadDoc(key)
-
-	// Save the doc in database
-	_, err := handler.CouchDatabase.SaveDoc(key, rev, &couchdb.CouchDoc{JSONValue: value, Attachments: nil})
 	return err
 }
 
 // QueryDocument executes a query string and return results
-func (handler *CouchDBHandler) QueryDocument(query string) ([]*couchdb.QueryResult, error) {
-	rs, _, er := handler.CouchDatabase.QueryDocuments(query)
+func (handler *CouchDBHandler) QueryDocument(query string) (statedb.ResultsIterator, error) {
+	rs, er := handler.dbEngine.ExecuteQuery(DefaultChaincodeName, query)
+	return rs, er
+}
+
+// QueryDocumentWithPagination executes a query string and return results
+func (handler *CouchDBHandler) QueryDocumentWithPagination(query string, limit int32, bookmark string) (statedb.ResultsIterator, error) {
+	queryOptions := make(map[string]interface{})
+	if limit != 0 {
+		queryOptions["limit"] = limit
+	}
+	if bookmark != "" {
+		queryOptions["bookmark"] = bookmark
+	}
+	rs, er := handler.dbEngine.ExecuteQueryWithMetadata(DefaultChaincodeName, query, queryOptions)
 	return rs, er
 }
 
 // ReadDocument executes a query string and return results
-func (handler *CouchDBHandler) ReadDocument(id string) (*couchdb.CouchDoc, string, error) {
-	couchDoc, revision, er := handler.CouchDatabase.ReadDoc(id)
-	return couchDoc, revision, er
-}
-
-// DeleteDocument delete a specific document on couchdb
-func (handler *CouchDBHandler) DeleteDocument(key string) error {
-	_, rev, _ := handler.CouchDatabase.ReadDoc(key)
-	er := handler.CouchDatabase.DeleteDoc(key, rev)
-	return er
+func (handler *CouchDBHandler) ReadDocument(id string) ([]byte, error) {
+	rs, er := handler.dbEngine.GetState(DefaultChaincodeName, id)
+	if er != nil {
+		return nil, er
+	}
+	// found no document in db with id
+	if rs == nil {
+		return nil, nil
+	}
+	return rs.Value, er
 }
 
 // QueryDocumentByRange get a list of documents from couchDB by key range
-func (handler *CouchDBHandler) QueryDocumentByRange(startKey, endKey string, limit int32) ([]*couchdb.QueryResult, string, error) {
-	rs, next, er := handler.CouchDatabase.ReadDocRange(startKey, endKey, limit)
-	return rs, next, er
+func (handler *CouchDBHandler) QueryDocumentByRange(startKey, endKey string) (statedb.ResultsIterator, error) {
+	rs, er := handler.dbEngine.GetStateRangeScanIterator(DefaultChaincodeName, startKey, endKey)
+	return rs, er
 }
+
+//// QueryDocumentByRange get a list of documents from couchDB by key range
+//// TODO: GetStateRangeScanIteratorWithMetadata does not accept bookmark
+//func (handler *CouchDBHandler) QueryDocumentByRangeWithPagination(startKey, endKey string, limit int32, bookmark string) (statedb.ResultsIterator, error) {
+//	queryOptions := make(map[string]interface{})
+//	if limit != 0 {
+//		queryOptions["limit"] = limit
+//	}
+//	//if bookmark != "" {
+//	//	queryOptions["bookmark"] = bookmark
+//	//}
+//
+//	rs, er := handler.dbEngine.GetStateRangeScanIteratorWithMetadata(DefaultChaincodeName, startKey, endKey, queryOptions)
+//	return rs, er
+//}

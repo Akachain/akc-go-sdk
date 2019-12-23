@@ -3,8 +3,8 @@ package main
 import (
 	"fmt"
 
-	. "github.com/Akachain/akc-go-sdk/common"
-	"github.com/Akachain/akc-go-sdk/util"
+	. "akc-go-sdk/common"
+	"akc-go-sdk/util"
 	"github.com/hyperledger/fabric/core/chaincode/shim"
 	pb "github.com/hyperledger/fabric/protos/peer"
 )
@@ -13,7 +13,7 @@ import (
 type Chaincode struct {
 }
 
-// DATATABLE - Table name in onchain
+// DATATABLE - prefix state name in onchain
 const DATATABLE = "Data_"
 
 // Data - struct
