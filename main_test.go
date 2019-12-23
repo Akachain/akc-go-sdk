@@ -58,7 +58,7 @@ func TestPartialQuery(t *testing.T) {
 	}
 
 	// Test GetStateByPartialCompositeKeyWithPagination
-	resultsIterator, queryResponse, _ := stub.GetStateByPartialCompositeKeyWithPagination(DATATABLE, []string{key1}, 5, "")
+	resultsIterator, _ := stub.GetStateByPartialCompositeKey(DATATABLE, []string{key1})
 
 	i := 0
 	for resultsIterator.HasNext() {
@@ -66,17 +66,7 @@ func TestPartialQuery(t *testing.T) {
 		i++
 	}
 
-	assert.Equal(t, i, 5)
-
-	resultsIterator, _, _ = stub.GetStateByPartialCompositeKeyWithPagination(DATATABLE, []string{key1}, 5, queryResponse.GetBookmark())
-
-	i = 0
-	for resultsIterator.HasNext() {
-		resultsIterator.Next()
-		i++
-	}
-
-	assert.Equal(t, i, 4)
+	assert.Equal(t, i, 9)
 }
 
 func TestSimpleData(t *testing.T) {
@@ -155,5 +145,14 @@ func TestGetQueryResultWithPagination(t *testing.T) {
 	var pageSize int32
 	pageSize = 5
 	_, queryResponse, _ := stub.GetQueryResultWithPagination(queryString, pageSize, "")
-	assert.Equal(t, queryResponse.GetFetchedRecordsCount(), 5)
+	assert.Equal(t, queryResponse.GetFetchedRecordsCount(), int32(5))
+
+	// Now get the rest
+	data, resp, _ := stub.GetQueryResultWithPagination(queryString, pageSize, queryResponse.Bookmark)
+	assert.Equal(t, resp.GetFetchedRecordsCount(), int32(4))
+
+	v, _ := data.Next()
+	var dat Data
+	json.Unmarshal(v.Value, &dat)
+	assert.Equal(t, dat.Key2, "5")
 }

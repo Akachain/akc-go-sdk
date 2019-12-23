@@ -19,6 +19,10 @@ func (it *AkcQueryIterator) HasNext() bool {
 	return it.currentLoc < len(it.data)
 }
 
+func (it *AkcQueryIterator) Length() int {
+	return len(it.data)
+}
+
 func (it *AkcQueryIterator) Next() (*queryresult.KV, error) {
 	var kv = new(queryresult.KV)
 

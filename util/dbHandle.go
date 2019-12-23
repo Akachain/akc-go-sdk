@@ -23,7 +23,7 @@ const (
 // This is to guarantee that the test uses the same logic in interaction with stateDB as the chaincode.
 // This also includes how chaincode builds its query to interact with the stateDB.
 type CouchDBHandler struct {
-	dbEngine statedb.VersionedDB
+	dbEngine *statecouchdb.VersionedDB
 }
 
 // NewCouchDBHandlerWithConnectionAuthentication returns a new CouchDBHandler and setup database for testing
@@ -43,7 +43,7 @@ func NewCouchDBHandlerWithConnectionAuthentication(isDrop bool) (*CouchDBHandler
 	if err != nil {
 		return nil, err
 	}
-	handler.dbEngine = h
+	handler.dbEngine = h.(*statecouchdb.VersionedDB)
 	return handler, nil
 }
 
@@ -73,7 +73,7 @@ func NewCouchDBHandler(dbName string, isDrop bool) (*CouchDBHandler, error) {
 }
 
 // SaveDocument stores a value in couchDB
-func (handler *CouchDBHandler) SaveDocument(key string, value []byte) (string, error) {
+func (handler *CouchDBHandler) SaveDocument(key string, value []byte) error {
 	// unmarshal the value param
 	var doc map[string]interface{}
 	json.Unmarshal(value, &doc)
@@ -84,7 +84,7 @@ func (handler *CouchDBHandler) SaveDocument(key string, value []byte) (string, e
 	savePoint := version.NewHeight(1, 2)
 	err := handler.dbEngine.ApplyUpdates(batch, savePoint)
 
-	return "rev", err
+	return err
 }
 
 // QueryDocument executes a query string and return results
@@ -94,8 +94,15 @@ func (handler *CouchDBHandler) QueryDocument(query string) (statedb.ResultsItera
 }
 
 // QueryDocumentWithPagination executes a query string and return results
-func (handler *CouchDBHandler) QueryDocumentWithPagination(query string) (statedb.ResultsIterator, error) {
-	rs, er := handler.dbEngine.ExecuteQuery(DefaultChaincodeName, query)
+func (handler *CouchDBHandler) QueryDocumentWithPagination(query string, limit int32, bookmark string) (statedb.ResultsIterator, error) {
+	queryOptions := make(map[string]interface{})
+	if limit != 0 {
+		queryOptions["limit"] = limit
+	}
+	if bookmark != "" {
+		queryOptions["bookmark"] = bookmark
+	}
+	rs, er := handler.dbEngine.ExecuteQueryWithMetadata(DefaultChaincodeName, query, queryOptions)
 	return rs, er
 }
 
@@ -113,7 +120,22 @@ func (handler *CouchDBHandler) ReadDocument(id string) ([]byte, error) {
 }
 
 // QueryDocumentByRange get a list of documents from couchDB by key range
-func (handler *CouchDBHandler) QueryDocumentByRange(startKey, endKey string, limit int32) (statedb.ResultsIterator, error) {
+func (handler *CouchDBHandler) QueryDocumentByRange(startKey, endKey string) (statedb.ResultsIterator, error) {
 	rs, er := handler.dbEngine.GetStateRangeScanIterator(DefaultChaincodeName, startKey, endKey)
 	return rs, er
 }
+
+//// QueryDocumentByRange get a list of documents from couchDB by key range
+//// TODO: GetStateRangeScanIteratorWithMetadata does not accept bookmark
+//func (handler *CouchDBHandler) QueryDocumentByRangeWithPagination(startKey, endKey string, limit int32, bookmark string) (statedb.ResultsIterator, error) {
+//	queryOptions := make(map[string]interface{})
+//	if limit != 0 {
+//		queryOptions["limit"] = limit
+//	}
+//	//if bookmark != "" {
+//	//	queryOptions["bookmark"] = bookmark
+//	//}
+//
+//	rs, er := handler.dbEngine.GetStateRangeScanIteratorWithMetadata(DefaultChaincodeName, startKey, endKey, queryOptions)
+//	return rs, er
+//}

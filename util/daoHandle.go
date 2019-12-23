@@ -11,9 +11,6 @@ import (
 	"github.com/mitchellh/mapstructure"
 )
 
-//High secure transaction database handle
-// ------------------- //
-
 // Update  Infomation
 func Changeinfo(stub shim.ChaincodeStubInterface, TableModel string, row_key []string, data interface{}) error {
 	_, err := InsertTableRow(stub, TableModel, row_key, data, FAIL_UNLESS_OVERWRITE, nil)

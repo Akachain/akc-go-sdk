@@ -3,6 +3,7 @@ package util
 import (
 	"errors"
 	"fmt"
+	"github.com/hyperledger/fabric/core/ledger/kvledger/txmgmt/statedb"
 	"strings"
 	"unicode/utf8"
 
@@ -44,18 +45,21 @@ func (stub *MockStubExtend) GetQueryResult(query string) (StateQueryIteratorInte
 // that did not implement anything.
 func (stub *MockStubExtend) GetQueryResultWithPagination(query string, pageSize int32,
 	bookmark string) (StateQueryIteratorInterface, *pb.QueryResponseMetadata, error) {
-	// Query data from couchDB
-	//rawdata, error := stub.DbHandler.QueryDocument(query)
-	//	//
-	//	//if error != nil {
-	//	//	return nil, nil, error
-	//	//}
-	//	//
-	//	//rs := &AkcQueryIterator{data: rawdata, currentLoc: 0}
-	//	//metadata := &pb.QueryResponseMetadata{FetchedRecordsCount: int32(len(rawdata)), Bookmark: bookmark}
-	//	//
-	//	//return rs, metadata, nil
-	return nil, nil, nil
+
+	raw, er := stub.DbHandler.QueryDocumentWithPagination(query, pageSize, bookmark)
+	if er != nil {
+		return nil, nil, er
+	}
+
+	iterator, er := FromResultsIterator(raw)
+	if er != nil {
+		return nil, nil, er
+	}
+
+	bm := raw.(statedb.QueryResultsIterator).GetBookmarkAndClose()
+	queryResponse := &pb.QueryResponseMetadata{FetchedRecordsCount: int32(iterator.Length()), Bookmark: bm}
+
+	return iterator, queryResponse, nil
 }
 
 // NewMockStubExtend constructor
@@ -120,21 +124,12 @@ func (stub *MockStubExtend) GetStringArgs() []string {
 
 // PutState writes the specified `value` and `key` into the ledger.
 func (stub *MockStubExtend) PutState(key string, value []byte) error {
-
 	// In case we are using CouchDB, we store the value document in the database
 	if stub.CouchDB {
-		val, _ := stub.GetState(key)
-		if val != nil {
-			// Document exist, must update instead of create new
-			stub.DbHandler.SaveDocument(key, value)
-		} else {
-			stub.DbHandler.SaveDocument(key, value)
-		}
-	} else {
-		// Carry on
-		stub.putStateOriginal(key, value)
+		return stub.DbHandler.SaveDocument(key, value)
 	}
-	return nil
+	// Carry on
+	return stub.putStateOriginal(key, value)
 }
 
 // GetState retrieves the value for a given key from the ledger
@@ -143,7 +138,6 @@ func (stub *MockStubExtend) GetState(key string) ([]byte, error) {
 	if stub.CouchDB {
 		return stub.DbHandler.ReadDocument(key)
 	}
-
 	// Else we can just carry on
 	return stub.GetStateOriginal(key)
 }
@@ -155,44 +149,10 @@ func (stub *MockStubExtend) GetStateOriginal(key string) ([]byte, error) {
 	return value, nil
 }
 
-// DelState writes the specified `value` and `key` into the ledger.
-//func (stub *MockStubExtend) DelState(key string) error {
-//
-//	// In case we are using CouchDB, we store the value document in the database
-//	if stub.CouchDB {
-//		val, _ := stub.GetState(key)
-//		if val != nil {
-//			// Document exist, must update instead of create new
-//			stub.DbHandler.DeleteDocument(key)
-//		} else {
-//			return errors.New("key does not exist")
-//		}
-//	}
-//
-//	// Carry on
-//	stub.DelStateOriginal(key)
-//
-//	return nil
-//}
-
-// DelStateOriginal is copied from mockstub as we still need to carry on normal delState operation with the mock ledger map
-func (stub *MockStubExtend) DelStateOriginal(key string) error {
-	mockLogger.Debug("MockStub", stub.Name, "Deleting", key, stub.State[key])
-	delete(stub.State, key)
-
-	for elem := stub.Keys.Front(); elem != nil; elem = elem.Next() {
-		if strings.Compare(key, elem.Value.(string)) == 0 {
-			stub.Keys.Remove(elem)
-		}
-	}
-
-	return nil
-}
-
 // This is copied from mockstub as we still need to carry on normal putstate operation with the mock ledger map
 func (stub *MockStubExtend) putStateOriginal(key string, value []byte) error {
 	if stub.TxID == "" {
-		err := errors.New("cannot PutState without a transactions - call stub.MockTransactionStart()?")
+		err := errors.New("cannot PutState without a transactions - call stub.MockTransactionStart()")
 		mockLogger.Errorf("%+v", err)
 		return err
 	}
@@ -241,10 +201,20 @@ func (stub *MockStubExtend) putStateOriginal(key string, value []byte) error {
 
 // GetStateByPartialCompositeKey queries couchdb by range
 func (stub *MockStubExtend) GetStateByPartialCompositeKey(objectType string, attributes []string) (StateQueryIteratorInterface, error) {
+	startKey, _ := stub.CreateCompositeKey(objectType, attributes)
+	endKey := startKey + string(maxUnicodeRuneValue)
 
-	rs, _, er := stub.GetStateByPartialCompositeKeyWithPagination(objectType, attributes, 1000, "")
+	rs, er := stub.DbHandler.QueryDocumentByRange(startKey, endKey)
+	if er != nil {
+		return nil, er
+	}
 
-	return rs, er
+	iterator, er := FromResultsIterator(rs)
+	if er != nil {
+		return nil, er
+	}
+
+	return iterator, nil
 }
 
 // GetStateByPartialCompositeKeyWithPagination queries couchdb with a partial compositekey and pagination information
@@ -252,13 +222,18 @@ func (stub *MockStubExtend) GetStateByPartialCompositeKey(objectType string, att
 //	startKey, _ := stub.CreateCompositeKey(objectType, attributes)
 //	endKey := startKey + string(maxUnicodeRuneValue)
 //
-//	// In case we already query before, we start from the bookmark rather than the startkey
-//	if bookmark != "" {
-//		startKey = bookmark
+//	rs, er := stub.DbHandler.QueryDocumentByRangeWithPagination(startKey, endKey, pageSize, bookmark)
+//	if er != nil{
+//		return nil, nil, er
 //	}
 //
-//	rs, bookmark, er := stub.DbHandler.QueryDocumentByRange(startKey, endKey, pageSize) //
-//	iterator := &AkcQueryIterator{data: rs, currentLoc: 0}
-//	queryResponse := &pb.QueryResponseMetadata{FetchedRecordsCount: int32(len(rs)), Bookmark: bookmark}
-//	return iterator, queryResponse, er
+//	iterator, er := FromResultsIterator(rs)
+//	if er != nil{
+//		return nil, nil, er
+//	}
+//
+//	bm := rs.(statedb.QueryResultsIterator).GetBookmarkAndClose()
+//	queryResponse := &pb.QueryResponseMetadata{FetchedRecordsCount: int32(iterator.Length()), Bookmark: bm}
+//
+//	return iterator, queryResponse, nil
 //}
