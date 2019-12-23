@@ -5,7 +5,7 @@ import (
 	"strconv"
 	"testing"
 
-	"akc-go-sdk/util"
+	"github.com/Akachain/akc-go-sdk/util"
 	"github.com/hyperledger/fabric/core/chaincode/shim"
 	"github.com/stretchr/testify/assert"
 )
