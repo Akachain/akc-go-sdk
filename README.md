@@ -1,4 +1,6 @@
-# akc-go-sdk
+# Akachain Golang Software Development Kit
+
+[![Go Report Card](https://goreportcard.com/badge/github.com/Akachain/akc-go-sdk)](https://goreportcard.com/report/github.com/Akachain/akc-go-sdk)
 
 golang SDK that supports writing chaincodes on Akachain platform. In release v1.0, we introduce 3 different Software Development Kits (SDKs)
 

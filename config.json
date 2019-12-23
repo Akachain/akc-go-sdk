@@ -1,4 +1,6 @@
 {
     "TEST_COUCHDB_URL":"localhost:5984",
+    "TEST_COUCHDB_USERNAME":"",
+    "TEST_COUCHDB_PASSWORD":"",
     "TEST_DATABASE_NAME":"sdk_test"
 } 
