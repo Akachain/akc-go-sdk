@@ -1,6 +1,6 @@
-module github.com/Akachain/akc-go-sdk/common
+module akc-go-sdk/common
 
-go 1.12
+go 1.13
 
 require (
 	github.com/Knetic/govaluate v3.0.0+incompatible // indirect
