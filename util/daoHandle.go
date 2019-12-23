@@ -4,7 +4,7 @@ import (
 	"encoding/json"
 	"fmt"
 
-	"akc-go-sdk/common"
+	"github.com/Akachain/akc-go-sdk/common"
 
 	"github.com/hyperledger/fabric/core/chaincode/shim"
 	pb "github.com/hyperledger/fabric/protos/peer"

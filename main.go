@@ -3,8 +3,8 @@ package main
 import (
 	"fmt"
 
-	. "akc-go-sdk/common"
-	"akc-go-sdk/util"
+	. "github.com/Akachain/akc-go-sdk/common"
+	"github.com/Akachain/akc-go-sdk/util"
 	"github.com/hyperledger/fabric/core/chaincode/shim"
 	pb "github.com/hyperledger/fabric/protos/peer"
 )
