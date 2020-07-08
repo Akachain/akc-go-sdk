@@ -2,11 +2,16 @@ package util
 
 import (
 	"encoding/json"
+	"io/ioutil"
+	"os"
+	"time"
+
 	"github.com/hyperledger/fabric/common/metrics/disabled"
 	"github.com/hyperledger/fabric/core/ledger/kvledger/txmgmt/statedb"
 	"github.com/hyperledger/fabric/core/ledger/kvledger/txmgmt/statedb/statecouchdb"
 	"github.com/hyperledger/fabric/core/ledger/kvledger/txmgmt/version"
 	"github.com/hyperledger/fabric/core/ledger/util/couchdb"
+	"github.com/spf13/viper"
 )
 
 const (
@@ -26,6 +31,17 @@ type CouchDBHandler struct {
 	dbEngine *statecouchdb.VersionedDB
 }
 
+// CouchDBDef contains parameters
+type CouchDBDef struct {
+	URL                   string
+	Username              string
+	Password              string
+	MaxRetries            int
+	MaxRetriesOnStartup   int
+	RequestTimeout        time.Duration
+	CreateGlobalChangesDB bool
+}
+
 // NewCouchDBHandlerWithConnectionAuthentication returns a new CouchDBHandler and setup database for testing
 func NewCouchDBHandlerWithConnectionAuthentication(isDrop bool) (*CouchDBHandler, error) {
 	// Sometimes we'll have to drop the database to clean all previous test
@@ -35,7 +51,8 @@ func NewCouchDBHandlerWithConnectionAuthentication(isDrop bool) (*CouchDBHandler
 
 	// Create a new dbEngine for the channel
 	handler := new(CouchDBHandler)
-	couchState, _ := statecouchdb.NewVersionedDBProvider(&disabled.Provider{})
+	config := getCouchDBDefinition()
+	couchState, _ := statecouchdb.NewVersionedDBProvider(config, &disabled.Provider{}, &statedb.Cache{})
 
 	// This step creates a redundant meta database with name channel_ ,
 	// there should be some ways to prevent this. We leave it for now
@@ -50,9 +67,8 @@ func NewCouchDBHandlerWithConnectionAuthentication(isDrop bool) (*CouchDBHandler
 func cleanUp() error {
 	// statedb.VersionedDB does not publish its couchDB object
 	// Thus, we'll have to recreate
-	couchDBDef := couchdb.GetCouchDBDefinition()
-	ins, er := couchdb.CreateCouchInstance(couchDBDef.URL, couchDBDef.Username, couchDBDef.Password,
-		couchDBDef.MaxRetries, couchDBDef.MaxRetriesOnStartup, couchDBDef.RequestTimeout, couchDBDef.CreateGlobalChangesDB, &disabled.Provider{})
+	config := getCouchDBDefinition()
+	ins, er := couchdb.CreateCouchInstance(config, &disabled.Provider{})
 	if er != nil {
 		return er
 	}
@@ -123,6 +139,33 @@ func (handler *CouchDBHandler) ReadDocument(id string) ([]byte, error) {
 func (handler *CouchDBHandler) QueryDocumentByRange(startKey, endKey string) (statedb.ResultsIterator, error) {
 	rs, er := handler.dbEngine.GetStateRangeScanIterator(DefaultChaincodeName, startKey, endKey)
 	return rs, er
+}
+
+//GetCouchDBDefinition exposes the useCouchDB variable
+func getCouchDBDefinition() *couchdb.Config {
+
+	couchDBAddress := viper.GetString("ledger.state.couchDBConfig.couchDBAddress")
+	username := viper.GetString("ledger.state.couchDBConfig.username")
+	password := viper.GetString("ledger.state.couchDBConfig.password")
+	maxRetries := viper.GetInt("ledger.state.couchDBConfig.maxRetries")
+	maxRetriesOnStartup := viper.GetInt("ledger.state.couchDBConfig.maxRetriesOnStartup")
+	requestTimeout := viper.GetDuration("ledger.state.couchDBConfig.requestTimeout")
+	// createGlobalChangesDB := viper.GetBool("ledger.state.couchDBConfig.createGlobalChangesDB")
+
+	redoPath, _ := ioutil.TempDir("", "redoPath")
+	// require.NoError(t, err)
+	defer os.RemoveAll(redoPath)
+	config := &couchdb.Config{
+		Address:             couchDBAddress,
+		Username:            username,
+		Password:            password,
+		MaxRetries:          maxRetries,
+		MaxRetriesOnStartup: maxRetriesOnStartup,
+		RequestTimeout:      requestTimeout,
+		RedoLogPath:         redoPath,
+	}
+
+	return config
 }
 
 //// QueryDocumentByRange get a list of documents from couchDB by key range

@@ -3,12 +3,14 @@ package util
 import (
 	"errors"
 	"fmt"
-	"github.com/hyperledger/fabric/core/ledger/kvledger/txmgmt/statedb"
 	"strings"
 	"unicode/utf8"
 
-	. "github.com/hyperledger/fabric/core/chaincode/shim"
-	pb "github.com/hyperledger/fabric/protos/peer"
+	"github.com/hyperledger/fabric/core/ledger/kvledger/txmgmt/statedb"
+
+	. "github.com/hyperledger/fabric-chaincode-go/shim"
+	. "github.com/hyperledger/fabric-chaincode-go/shimtest"
+	pb "github.com/hyperledger/fabric-protos-go/peer"
 
 	logging "github.com/op/go-logging"
 	viper "github.com/spf13/viper"

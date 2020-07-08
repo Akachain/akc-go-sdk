@@ -6,7 +6,7 @@ import (
 	"testing"
 
 	"github.com/Akachain/akc-go-sdk/util"
-	"github.com/hyperledger/fabric/core/chaincode/shim"
+	"github.com/hyperledger/fabric-chaincode-go/shim"
 	"github.com/stretchr/testify/assert"
 )
 

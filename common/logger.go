@@ -4,11 +4,7 @@ import (
 	"fmt"
 	"runtime"
 	"strings"
-
-	"github.com/hyperledger/fabric/core/chaincode/shim"
 )
-
-var Logger = shim.NewLogger("logger")
 
 func GetLine(depthList ...int) string {
 	var depth int
