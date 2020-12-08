@@ -7,7 +7,7 @@ import (
 	"reflect" // This is only used in InterfaceIsNil
 	"testing"
 
-	"github.com/hyperledger/fabric/core/chaincode/shim"
+	"github.com/hyperledger/fabric-chaincode-go/shim"
 	uuid "github.com/satori/go.uuid"
 )
 

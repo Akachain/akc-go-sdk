@@ -2,10 +2,10 @@ package util
 
 import (
 	"errors"
-	. "github.com/hyperledger/fabric/core/chaincode/shim"
+	. "github.com/hyperledger/fabric-chaincode-go/shim"
+	"github.com/hyperledger/fabric-protos-go/ledger/queryresult"
 	"github.com/hyperledger/fabric/core/ledger/kvledger/txmgmt/statedb"
 	"github.com/hyperledger/fabric/core/ledger/util/couchdb"
-	"github.com/hyperledger/fabric/protos/ledger/queryresult"
 )
 
 // AkcQueryIterator inherits StateQueryIterator to simulate how the peer handle query string response

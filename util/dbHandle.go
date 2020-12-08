@@ -7,6 +7,11 @@ import (
 	"github.com/hyperledger/fabric/core/ledger/kvledger/txmgmt/statedb/statecouchdb"
 	"github.com/hyperledger/fabric/core/ledger/kvledger/txmgmt/version"
 	"github.com/hyperledger/fabric/core/ledger/util/couchdb"
+	//"path/filepath"
+
+	//"github.com/hyperledger/fabric/core/ledger"
+	"io/ioutil"
+	"time"
 )
 
 const (
@@ -35,7 +40,18 @@ func NewCouchDBHandlerWithConnectionAuthentication(isDrop bool) (*CouchDBHandler
 
 	// Create a new dbEngine for the channel
 	handler := new(CouchDBHandler)
-	couchState, _ := statecouchdb.NewVersionedDBProvider(&disabled.Provider{})
+	redoPath, err := ioutil.TempDir("", "redoPath")
+	config := &couchdb.Config{
+		Address:             DefaultBaseURL,
+		InternalQueryLimit:  1000,
+		MaxBatchUpdateSize:  1000,
+		MaxRetries:          3,
+		MaxRetriesOnStartup: 20,
+		RequestTimeout:      35 * time.Second,
+		RedoLogPath:         redoPath,
+		UserCacheSizeMBs:    8,
+	}
+	couchState, _ := statecouchdb.NewVersionedDBProvider(config, &disabled.Provider{}, &statedb.Cache{})
 
 	// This step creates a redundant meta database with name channel_ ,
 	// there should be some ways to prevent this. We leave it for now
@@ -50,9 +66,18 @@ func NewCouchDBHandlerWithConnectionAuthentication(isDrop bool) (*CouchDBHandler
 func cleanUp() error {
 	// statedb.VersionedDB does not publish its couchDB object
 	// Thus, we'll have to recreate
-	couchDBDef := couchdb.GetCouchDBDefinition()
-	ins, er := couchdb.CreateCouchInstance(couchDBDef.URL, couchDBDef.Username, couchDBDef.Password,
-		couchDBDef.MaxRetries, couchDBDef.MaxRetriesOnStartup, couchDBDef.RequestTimeout, couchDBDef.CreateGlobalChangesDB, &disabled.Provider{})
+	// set required config data to use state couchdb
+	redoPath, _ := ioutil.TempDir("", "redoPath")
+	couchdbConfig := &couchdb.Config{
+		Address:             DefaultBaseURL,
+		Username:            "",
+		Password:            "",
+		MaxRetries:          3,
+		MaxRetriesOnStartup: 20,
+		RequestTimeout:      35 * time.Second,
+		RedoLogPath:         redoPath,
+	}
+	ins, er := couchdb.CreateCouchInstance(couchdbConfig, &disabled.Provider{})
 	if er != nil {
 		return er
 	}

@@ -7,8 +7,9 @@ import (
 	"strings"
 	"unicode/utf8"
 
-	. "github.com/hyperledger/fabric/core/chaincode/shim"
-	pb "github.com/hyperledger/fabric/protos/peer"
+	. "github.com/hyperledger/fabric-chaincode-go/shim"
+	"github.com/hyperledger/fabric-chaincode-go/shimtest"
+	pb "github.com/hyperledger/fabric-protos-go/peer"
 
 	logging "github.com/op/go-logging"
 	viper "github.com/spf13/viper"
@@ -27,7 +28,7 @@ type MockStubExtend struct {
 	cc        Chaincode       // this is private in MockStub
 	CouchDB   bool            // if we use couchDB
 	DbHandler *CouchDBHandler // if we use couchDB
-	*MockStub
+	*shimtest.MockStub
 }
 
 // GetQueryResult overrides the same function in MockStub
@@ -63,7 +64,7 @@ func (stub *MockStubExtend) GetQueryResultWithPagination(query string, pageSize 
 }
 
 // NewMockStubExtend constructor
-func NewMockStubExtend(stub *MockStub, c Chaincode) *MockStubExtend {
+func NewMockStubExtend(stub *shimtest.MockStub, c Chaincode) *MockStubExtend {
 	s := new(MockStubExtend)
 	s.MockStub = stub
 	s.cc = c
