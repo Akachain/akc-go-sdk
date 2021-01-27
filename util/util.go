@@ -315,7 +315,8 @@ func MockInitTransaction(t *testing.T, stub *MockStubExtend, args [][]byte) stri
 
 // Generate random transaction ID
 func genTxID() string {
-	uid := uuid.Must(uuid.NewV4())
+	uuidNewV4, err := uuid.NewV4()
+	uid := uuid.Must(uuidNewV4, err)
 	txId := fmt.Sprintf("%s", uid)
 	return txId
 }
